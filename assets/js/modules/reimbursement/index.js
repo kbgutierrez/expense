@@ -11,6 +11,8 @@ const normalizeApiRows = (rows) =>
 		reimbursementNo: normalizeDate(row.reimbursement_id),
 		description: normalizeDate(row.description || ''),
 		totalAmount: Number(row.total_amount || 0),
+		approvedAmount: row.approved_amount !== null && row.approved_amount !== undefined ? Number(row.approved_amount) : null,
+		hasApproval: Number(row.has_approval || 0) === 1,
 		submittedDate: normalizeDate(row.submitted_date || '').slice(0, 10),
 		statusCode: normalizeDate(row.status_code),
 		status: normalizeDate(row.status_name),
@@ -81,6 +83,8 @@ const formatPHP = (amount) => {
 	const value = Number(amount || 0);
 	return value.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
 };
+
+const formatApprovedPHP = (amount) => (amount === null || amount === undefined ? '—' : formatPHP(amount));
 
 const normalizeDate = (value) => (value ? String(value) : '');
 
@@ -195,7 +199,7 @@ const renderDesktopTable = (rows) => {
 
 	if (!rows.length) {
 		domList.reimbursementTbody.innerHTML =
-			'<tr><td colspan="5" class="text-center text-muted">No records found</td></tr>';
+			'<tr><td colspan="6" class="text-center text-muted">No records found</td></tr>';
 		return;
 	}
 
@@ -203,7 +207,7 @@ const renderDesktopTable = (rows) => {
 		const isDraft = row.statusCode === 'RMB_DRAFT' || row.status === 'Draft';
 		const actionButton = isDraft
 			? `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="edit" data-ref="${escapeHtml(row.reimbursementNo)}">Edit Draft</button>`
-			: (row.status === 'Submitted' || row.status === 'Pending Approval')
+			: ((row.status === 'Submitted' || row.status === 'Pending Approval') && !row.hasApproval)
 				? `<button type="button" class="btn btn-sm btn-outline-warning" data-action="edit-submitted" data-ref="${escapeHtml(row.reimbursementNo)}">Edit</button>
            <button type="button" class="btn btn-sm btn-outline-primary" data-action="view" data-ref="${escapeHtml(row.reimbursementNo)}">View</button>`
 				: `<button type="button" class="btn btn-sm btn-outline-primary" data-action="view" data-ref="${escapeHtml(row.reimbursementNo)}">View</button>`;
@@ -211,6 +215,7 @@ const renderDesktopTable = (rows) => {
 		tr.innerHTML = `
 			<td style="white-space:nowrap;">${escapeHtml(row.reimbursementNo)}</td>
 			<td class="text-right" style="white-space:nowrap;">${formatPHP(row.totalAmount)}</td>
+			<td class="text-right" style="white-space:nowrap;">${formatApprovedPHP(row.approvedAmount)}</td>
 			<td style="white-space:nowrap;">${escapeHtml(row.submittedDate)}</td>
 			<td style="white-space:nowrap;">${getStatusBadge(row.status)}</td>
 			<td class="text-center kna-actions">
@@ -295,7 +300,7 @@ const renderMobileCards = (rows) => {
 		const isDraft = row.statusCode === 'RMB_DRAFT' || row.status === 'Draft';
 		const actionButton = isDraft
 			? `<button type="button" class="btn btn-outline-secondary btn-sm kna-small w-100" data-action="edit" data-ref="${escapeHtml(row.reimbursementNo)}">Edit Draft</button>`
-			: (row.status === 'Submitted' || row.status === 'Pending Approval')
+			: ((row.status === 'Submitted' || row.status === 'Pending Approval') && !row.hasApproval)
 				? `<button type="button" class="btn btn-outline-warning btn-sm kna-small w-100 mb-1" data-action="edit-submitted" data-ref="${escapeHtml(row.reimbursementNo)}">Edit</button>
            <button type="button" class="btn btn-outline-primary btn-sm kna-small w-100" data-action="view" data-ref="${escapeHtml(row.reimbursementNo)}">View Details</button>`
 				: `<button type="button" class="btn btn-outline-primary btn-sm kna-small w-100" data-action="view" data-ref="${escapeHtml(row.reimbursementNo)}">View Details</button>`;
@@ -307,8 +312,12 @@ const renderMobileCards = (rows) => {
 				<div>${getStatusBadge(row.status)}</div>
 			</div>
 			<div class="kna-row">
-				<div class="kna-small text-muted">Total Amount</div>
+				<div class="kna-small text-muted">Requested Amount</div>
 				<div class="kna-small font-weight-bold">${formatPHP(row.totalAmount)}</div>
+			</div>
+			<div class="kna-row">
+				<div class="kna-small text-muted">Approved Amount</div>
+				<div class="kna-small font-weight-bold">${formatApprovedPHP(row.approvedAmount)}</div>
 			</div>
 			<div class="kna-row">
 				<div class="kna-small text-muted">Submitted</div>

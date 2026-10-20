@@ -35,11 +35,8 @@ class Approvals extends MY_Controller
                 throw new Exception('Department not found for that user.');
             }
 
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_payable_to_users', 1),
-                array('DepartmentId' => $departmentId),
-                'result'
-            );
+            $this->load->model('Lookup_model');
+            $result = $this->Lookup_model->get_payable_to_users($departmentId);
 
             return $this->respondSuccess('OK', is_array($result) ? $result : array());
         } catch (Exception $e) {
@@ -219,12 +216,13 @@ class Approvals extends MY_Controller
 
     public function review($approval_id = 0)
     {
-        $costCenters = $this->sp->fetchData('sp_fetch_active_cost_centers');
+        $this->load->model('Lookup_model');
+        $costCenters = $this->Lookup_model->get_cost_centers();
         if (!is_array($costCenters)) {
             $costCenters = array();
         }
 
-        $expenseTypes = $this->sp->fetchData('sp_fetch_expense_types');
+        $expenseTypes = $this->Lookup_model->get_expense_types();
         if (!is_array($expenseTypes)) {
             $expenseTypes = array();
         }
@@ -247,15 +245,8 @@ class Approvals extends MY_Controller
 
     private function getTransactionInfoFromApprovalItem($approvalPerItemId)
     {
-        $params = array(
-            'ApprovalPerItemId' => (int) $approvalPerItemId,
-        );
-
-        $result = $this->sp->readData(
-            build_sp('sp_fetch_transaction_info_by_item', count($params)),
-            $params,
-            'row'
-        );
+        $this->load->model('Approval_model');
+        $result = $this->Approval_model->find_transaction_by_item((int) $approvalPerItemId);
 
         return $result ?: null;
     }
@@ -266,15 +257,8 @@ class Approvals extends MY_Controller
             return array();
         }
 
-        $params = array(
-            'CaId' => $caId,
-        );
-
-        $result = $this->sp->readData(
-            build_sp('sp_fetch_ca_attachments_by_caid', count($params)),
-            $params,
-            'result'
-        );
+        $this->load->model('Cash_advance_model');
+        $result = $this->Cash_advance_model->list_attachments($caId);
 
         if (!is_array($result)) {
             return array();
@@ -319,17 +303,8 @@ class Approvals extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "UserId" => $userId,
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_pending_approvals_header', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Approval_model');
+            $result = $this->Approval_model->list_pending_headers($userId, $cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take, 'approval_detail_id');
 
@@ -359,17 +334,8 @@ class Approvals extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "UserId" => $userId,
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_past_approvals_header', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Approval_model');
+            $result = $this->Approval_model->list_past_headers($userId, $cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take, 'approval_detail_id');
 
@@ -448,15 +414,8 @@ class Approvals extends MY_Controller
 
             $paymentCapability = null;
             if (is_array($result) && count($result) > 0) {
-                $capParams = array(
-                    'ReferenceNo' => $refereceNo,
-                    'UserId' => $this->session->userdata('user_id'),
-                );
-                $capResult = $this->sp->readData(
-                    build_sp('sp_fetch_user_payment_capability', count($capParams)),
-                    $capParams,
-                    'row'
-                );
+                $this->load->model('Payment_model');
+                $capResult = $this->Payment_model->get_user_payment_capability($refereceNo, $this->session->userdata('user_id'));
                 $paymentCapability = is_array($capResult) ? $capResult : null;
             }
 
@@ -778,23 +737,17 @@ class Approvals extends MY_Controller
     {
         $prefix = strtoupper(substr($referenceNo, 0, 3)) === 'RMB' ? 'RMB' : strtoupper(substr($referenceNo, 0, 2));
         if ($prefix === 'CA') {
-            $spName = 'sp_fetch_cash_advance_petty_cash_data';
-            $paramName = 'CashAdvanceId';
+            $this->load->model('Cash_advance_model');
+            $slipData = $this->Cash_advance_model->get_petty_cash_data($referenceNo);
         } elseif ($prefix === 'LQ') {
-            $spName = 'sp_fetch_liquidation_petty_cash_data';
-            $paramName = 'LiquidationId';
+            $this->load->model('Liquidation_model');
+            $slipData = $this->Liquidation_model->get_petty_cash_data($referenceNo);
         } elseif ($prefix === 'RMB') {
-            $spName = 'sp_fetch_reimbursement_petty_cash_data';
-            $paramName = 'ReimbursementId';
+            $this->load->model('Reimbursement_model');
+            $slipData = $this->Reimbursement_model->get_petty_cash_data($referenceNo);
         } else {
             return null;
         }
-
-        $slipData = $this->sp->readData(
-            build_sp($spName, 1),
-            array($paramName => $referenceNo),
-            'row'
-        );
 
         if (!is_array($slipData) || empty($slipData)) {
             return null;
@@ -1305,26 +1258,27 @@ class Approvals extends MY_Controller
             return false;
         }
 
-        $params = array(
-            'DetailId' => $detailId,
-            'Description' => trim((string) $description),
-            'InvoiceReceiptNo' => trim((string) $invoiceReceiptNo),
-            'ActualAmount' => (float) $actualAmount,
-            'DocumentDate' => trim((string) $documentDate),
-            'ExpenseCategory' => trim((string) $expenseCategory),
-            'IsVatable' => (int) (bool) $isVatable,
-            'NetAmount' => (float) $netAmount,
-            'VatAmount' => (float) $vatAmount,
-            'VendorName' => trim((string) $vendorName),
-            'VendorAddress' => trim((string) $vendorAddress),
-            'VendorTin' => trim((string) $vendorTin),
-            'ApprovedGrossAmount' => $approvedGrossAmount !== null ? (float) $approvedGrossAmount : (float) $actualAmount,
-        );
-
-        return $this->sp->createData(
-            build_sp('sp_update_liquidation_detail_review', count($params)),
-            $params
-        ) === TRUE;
+        try {
+            $this->load->model('Liquidation_model');
+            $this->Liquidation_model->update_detail_review(
+                $detailId,
+                trim((string) $description),
+                trim((string) $invoiceReceiptNo),
+                (float) $actualAmount,
+                trim((string) $documentDate),
+                trim((string) $expenseCategory),
+                (int) (bool) $isVatable,
+                (float) $netAmount,
+                (float) $vatAmount,
+                trim((string) $vendorName),
+                trim((string) $vendorAddress),
+                trim((string) $vendorTin),
+                $approvedGrossAmount !== null ? (float) $approvedGrossAmount : (float) $actualAmount
+            );
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     private function updateReimbursementEditableFields($detailId, $description, $invoiceReceiptNo, $documentDate, $actualAmount, $expenseCategory, $isVatable, $netAmount, $vatAmount, $vendorName, $vendorAddress, $vendorTin, $approvedGrossAmount = null)
@@ -1334,26 +1288,27 @@ class Approvals extends MY_Controller
             return false;
         }
 
-        $params = array(
-            'DetailId' => $detailId,
-            'Description' => trim((string) $description),
-            'InvoiceReceiptNo' => trim((string) $invoiceReceiptNo),
-            'ActualAmount' => (float) $actualAmount,
-            'DocumentDate' => trim((string) $documentDate),
-            'ExpenseCategory' => trim((string) $expenseCategory),
-            'IsVatable' => (int) (bool) $isVatable,
-            'NetAmount' => (float) $netAmount,
-            'VatAmount' => (float) $vatAmount,
-            'VendorName' => trim((string) $vendorName),
-            'VendorAddress' => trim((string) $vendorAddress),
-            'VendorTin' => trim((string) $vendorTin),
-            'ApprovedGrossAmount' => $approvedGrossAmount !== null ? (float) $approvedGrossAmount : (float) $actualAmount,
-        );
-
-        return $this->sp->createData(
-            build_sp('sp_update_reimbursement_detail_review', count($params)),
-            $params
-        ) === TRUE;
+        try {
+            $this->load->model('Reimbursement_model');
+            $this->Reimbursement_model->update_detail_review(
+                $detailId,
+                trim((string) $description),
+                trim((string) $invoiceReceiptNo),
+                (float) $actualAmount,
+                trim((string) $documentDate),
+                trim((string) $expenseCategory),
+                (int) (bool) $isVatable,
+                (float) $netAmount,
+                (float) $vatAmount,
+                trim((string) $vendorName),
+                trim((string) $vendorAddress),
+                trim((string) $vendorTin),
+                $approvedGrossAmount !== null ? (float) $approvedGrossAmount : (float) $actualAmount
+            );
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     private function updateCashAdvanceEditableFields($referenceNo, $description, $amount, $updatedBy, $approvedAmount = null, $approvedAmountInWords = '')
@@ -1363,22 +1318,20 @@ class Approvals extends MY_Controller
             return false;
         }
 
-        $params = array(
-            'ReferenceNo' => $referenceNo,
-            'Description' => trim((string) $description),
-            'Amount' => (float) $amount,
-            'UpdatedBy' => (int) $updatedBy,
-        );
-
-        if ($approvedAmount !== null) {
-            $params['ApprovedAmount'] = (float) $approvedAmount;
-            $params['ApprovedAmountInWords'] = trim((string) $approvedAmountInWords);
+        try {
+            $this->load->model('Cash_advance_model');
+            $this->Cash_advance_model->update_detail_review(
+                $referenceNo,
+                trim((string) $description),
+                (float) $amount,
+                (int) $updatedBy,
+                $approvedAmount !== null ? (float) $approvedAmount : null,
+                $approvedAmount !== null ? trim((string) $approvedAmountInWords) : null
+            );
+            return true;
+        } catch (Exception $e) {
+            return false;
         }
-
-        return $this->sp->createData(
-            build_sp('sp_update_ca_detail_review', count($params)),
-            $params
-        ) === TRUE;
     }
 
     public function api_update_ca_header()
@@ -1402,36 +1355,12 @@ class Approvals extends MY_Controller
                 throw new Exception('User not authenticated.');
             }
 
-            $params = array(
-                'ReferenceNo' => $referenceNo,
-                'CostCenterId' => $costCenterId,
-                'PayableTo' => $payableTo,
-                'Address' => $address,
-                'UpdatedBy' => $userId,
-            );
-
-            $result = false;
             if ($io !== '') {
-                $paramsWithIo = $params;
-                $paramsWithIo['IO'] = $io;
-
                 try {
-                    $result = $this->sp->createData(
-                        build_sp('sp_update_ca_header_fields', count($paramsWithIo)),
-                        $paramsWithIo,
-                        'result'
-                    );
+                    $this->load->model('Cash_advance_model');
+                    $this->Cash_advance_model->update_header_fields($referenceNo, $costCenterId, $payableTo, $address, $userId, $io);
                 } catch (Throwable $e) {
-                    $result = false;
                 }
-            }
-
-            if ($result !== TRUE) {
-                $result = $this->sp->createData(
-                    build_sp('sp_update_ca_header_fields', count($params)),
-                    $params,
-                    'result'
-                );
             }
 
             return $this->respondSuccess('Cash advance details updated successfully.');
@@ -1448,7 +1377,6 @@ class Approvals extends MY_Controller
 
             $referenceNo = isset($data['reference_no']) ? trim((string) $data['reference_no']) : '';
             $costCenterId = isset($data['cost_center_id']) ? trim((string) $data['cost_center_id']) : '';
-            $payableTo = isset($data['payable_to']) ? trim((string) $data['payable_to']) : null;
             $address = isset($data['address']) ? trim((string) $data['address']) : '';
             $io = isset($data['io']) ? trim((string) $data['io']) : '';
 
@@ -1461,20 +1389,11 @@ class Approvals extends MY_Controller
                 throw new Exception('User not authenticated.');
             }
 
-            $params = array(
-                'ReferenceNo' => $referenceNo,
-                'CostCenterId' => $costCenterId,
-                'PayableTo' => $payableTo,
-                'Address' => $address,
-                'UpdatedBy' => $userId,
-                'IO' => $io,
-            );
-
-            $result = $this->sp->createData(
-                build_sp('sp_update_reimbursement_header_fields', count($params)),
-                $params,
-                'result'
-            );
+            try {
+                $this->load->model('Reimbursement_model');
+                $this->Reimbursement_model->update_header_fields($referenceNo, $costCenterId, $address, $userId, $io);
+            } catch (Exception $e) {
+            }
 
             return $this->respondSuccess('Reimbursement details updated successfully.');
         } catch (Throwable $e) {
@@ -1747,23 +1666,11 @@ class Approvals extends MY_Controller
                 $transactionType = 'REPLENISHMENT';
             }
 
-            $auditParams = array(
-                'TransactionId' => $referenceNo,
-            );
-            $auditTrail = $this->sp->readData(
-                build_sp('sp_fetch_audit_trail', count($auditParams)),
-                $auditParams,
-                'result'
-            );
+            $this->load->model('Audit_trail_model');
+            $auditTrail = $this->Audit_trail_model->list_by_transaction($referenceNo);
 
-            $matrixParams = array(
-                'ReferenceId' => $referenceNo,
-            );
-            $approvalMatrix = $this->sp->readData(
-                build_sp('sp_fetch_approval_matrix', count($matrixParams)),
-                $matrixParams,
-                'result'
-            );
+            $this->load->model('Approval_matrix_model');
+            $approvalMatrix = $this->Approval_matrix_model->list_approvals_by_reference($referenceNo);
 
             return $this->respondSuccess('Timeline fetched', array(
                 'transaction_type' => $transactionType,

@@ -7,8 +7,7 @@ class Notifications extends MY_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('SPModel', 'sp');
-        $this->sp->setDatabase('dbknet');
+        $this->load->model('Notification_model');
     }
 
     public function api_get_recent()
@@ -25,17 +24,7 @@ class Notifications extends MY_Controller
                 return;
             }
 
-            $params = array(
-                'Email' => $email,
-                'UserId' => $userId,
-                'Take' => 10,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_notification_log_for_user', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Notification_model->list_log_for_user($email, $userId, 10);
 
             echo json_encode(array(
                 'status' => 'success',

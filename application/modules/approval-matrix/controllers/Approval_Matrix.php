@@ -10,6 +10,8 @@ class Approval_Matrix extends MY_Controller
         parent::__construct();
         $this->load->model('SPModel', 'sp');
         $this->sp->setDatabase('dbknet');
+        $this->load->model('Approval_matrix_model');
+        $this->load->model('Lookup_model');
     }
 
     public function index()
@@ -69,7 +71,7 @@ class Approval_Matrix extends MY_Controller
     public function api_get_approvers(){
          try{
             $this->output->set_content_type('application/json');
-            $result = $this->sp->fetchData('sp_fetch_approvers');
+            $result = $this->Approval_matrix_model->list_approvers();
     
             return $this->respondSuccess("success", $result);
         }catch(Exception $e){
@@ -82,7 +84,7 @@ class Approval_Matrix extends MY_Controller
     public function api_get_departments(){
         try{
             $this->output->set_content_type('application/json');
-            $result = $this->sp->fetchData('sp_fetch_department');
+            $result = $this->Lookup_model->get_departments();
 
             return $this->respondSuccess("success", $result);
         }catch(Exception $e){
@@ -93,7 +95,7 @@ class Approval_Matrix extends MY_Controller
     public function api_get_sales_offices(){
         try{
             $this->output->set_content_type('application/json');
-            $result = $this->sp->fetchData('sp_fetch_sales_offices');
+            $result = $this->Lookup_model->get_sales_offices();
 
             return $this->respondSuccess("success", $result);
         }catch(Exception $e){
@@ -110,11 +112,7 @@ class Approval_Matrix extends MY_Controller
                 return $this->respondError("SOffcCode is required");
             }
 
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_sales_districts_by_office', 1),
-                array('SOffcCode' => $sOffcCode),
-                'result'
-            );
+            $result = $this->Lookup_model->get_sales_districts($sOffcCode);
 
             return $this->respondSuccess("success", $result);
         }catch(Exception $e){
@@ -127,34 +125,38 @@ class Approval_Matrix extends MY_Controller
         try{
             $this->output->set_content_type('application/json');
             $data = $this->getRequestPayload();
-            $headerParams = array(
-                'matrix_name'=> $data['matrix_name'],
-                'transaction_type' => $data['transaction_type'],
-                'department_id' => $data['department_id'],
-                'min_amount' => $data['min_amount'],
-                'max_amount' => $data['max_amount'],
-                'created_by' => $this->session->userdata('user_id'),
-                'sales_office_code' => !empty($data['sales_office_code']) ? $data['sales_office_code'] : null,
-                'sales_district_code' => !empty($data['sales_district_code']) ? $data['sales_district_code'] : null,
-            );
-            $headerId = $this->sp->createReturnId(build_sp('sp_insert_approval_matrix_header', count($headerParams)), $headerParams, 'result');
-            if (!is_array($headerId) || empty($headerId['id'])) {
-                $message = (is_array($headerId) && !empty($headerId['message'])) ? $headerId['message'] : "Failed to save approval matrix";
-                return $this->respondError($message);
+            try {
+                $headerId = $this->Approval_matrix_model->create_header(
+                    $data['matrix_name'],
+                    $data['transaction_type'],
+                    $data['department_id'],
+                    $data['min_amount'],
+                    $data['max_amount'],
+                    $this->session->userdata('user_id'),
+                    !empty($data['sales_office_code']) ? $data['sales_office_code'] : null,
+                    !empty($data['sales_district_code']) ? $data['sales_district_code'] : null
+                );
+            } catch (Exception $e) {
+                return $this->respondError($e->getMessage() !== '' ? $e->getMessage() : "Failed to save approval matrix");
+            }
+            if (empty($headerId)) {
+                return $this->respondError("Failed to save approval matrix");
             }
             $details = isset($data['details']) && is_array($data['details']) ? $data['details'] : array();
             foreach($details as $detail){
-                $detailParams = array(
-                    'matrix_header_id' => $headerId['id'],
-                    'approver_id' => $detail['approver_id'],
-                    'approval_order' => $detail['approval_order'],
-                    'approval_type' => $detail['approval_type'],
-                    'is_payment_advisory' => !empty($detail['is_payment_advisory']) ? 1 : 0,
-                    'is_payment_release' => !empty($detail['is_payment_release']) ? 1 : 0,
-                    'is_petty_cash_slip' => !empty($detail['is_petty_cash_slip']) ? 1 : 0,
-                    'is_bizlink_export' => !empty($detail['is_bizlink_export']) ? 1 : 0,
-                );
-                $this->sp->createData(build_sp('sp_insert_approval_matrix_details', count($detailParams)), $detailParams);
+                try {
+                    $this->Approval_matrix_model->create_detail(
+                        $headerId,
+                        $detail['approver_id'],
+                        $detail['approval_order'],
+                        $detail['approval_type'],
+                        !empty($detail['is_payment_advisory']) ? 1 : 0,
+                        !empty($detail['is_payment_release']) ? 1 : 0,
+                        !empty($detail['is_petty_cash_slip']) ? 1 : 0,
+                        !empty($detail['is_bizlink_export']) ? 1 : 0
+                    );
+                } catch (Exception $e) {
+                }
             }
             return $this->respondSuccess("Approval matrix saved successfully");
 
@@ -173,49 +175,48 @@ class Approval_Matrix extends MY_Controller
                 return $this->respondError("Invalid matrix ID");
             }
 
-            $headerParams = array(
-                'id' => $id,
-                'matrix_name' => $data['matrix_name'],
-                'transaction_type' => $data['transaction_type'],
-                'department_id' => $data['department_id'],
-                'min_amount' => $data['min_amount'],
-                'max_amount' => $data['max_amount'],
-                'is_active' => isset($data['is_active']) ? (int) $data['is_active'] : 1,
-                'updated_by' => $this->session->userdata('user_id'),
-                'sales_office_code' => !empty($data['sales_office_code']) ? $data['sales_office_code'] : null,
-                'sales_district_code' => !empty($data['sales_district_code']) ? $data['sales_district_code'] : null,
-            );
-
-            $headerResult = $this->sp->createData(
-                build_sp('sp_update_approval_matrix_header', count($headerParams)),
-                $headerParams
-            );
+            try {
+                $this->Approval_matrix_model->update_header(
+                    $id,
+                    $data['matrix_name'],
+                    $data['transaction_type'],
+                    $data['department_id'],
+                    $data['min_amount'],
+                    $data['max_amount'],
+                    isset($data['is_active']) ? (int) $data['is_active'] : 1,
+                    $this->session->userdata('user_id'),
+                    !empty($data['sales_office_code']) ? $data['sales_office_code'] : null,
+                    !empty($data['sales_district_code']) ? $data['sales_district_code'] : null
+                );
+                $headerResult = true;
+            } catch (Exception $e) {
+                $headerResult = $e->getMessage();
+            }
 
             if ($headerResult !== true) {
                 return $this->respondError(is_string($headerResult) ? $headerResult : "Failed to update approval matrix");
             }
 
-            $this->sp->createData(
-                build_sp('sp_delete_approval_matrix_details', 1),
-                array('matrix_header_id' => $id)
-            );
+            try {
+                $this->Approval_matrix_model->delete_details($id);
+            } catch (Exception $e) {
+            }
 
             $details = isset($data['details']) && is_array($data['details']) ? $data['details'] : array();
             foreach ($details as $detail) {
-                $detailParams = array(
-                    'matrix_header_id' => $id,
-                    'approver_id' => $detail['approver_id'],
-                    'approval_order' => $detail['approval_order'],
-                    'approval_type' => $detail['approval_type'],
-                    'is_payment_advisory' => !empty($detail['is_payment_advisory']) ? 1 : 0,
-                    'is_payment_release' => !empty($detail['is_payment_release']) ? 1 : 0,
-                    'is_petty_cash_slip' => !empty($detail['is_petty_cash_slip']) ? 1 : 0,
-                    'is_bizlink_export' => !empty($detail['is_bizlink_export']) ? 1 : 0,
-                );
-                $this->sp->createData(
-                    build_sp('sp_insert_approval_matrix_details', count($detailParams)),
-                    $detailParams
-                );
+                try {
+                    $this->Approval_matrix_model->create_detail(
+                        $id,
+                        $detail['approver_id'],
+                        $detail['approval_order'],
+                        $detail['approval_type'],
+                        !empty($detail['is_payment_advisory']) ? 1 : 0,
+                        !empty($detail['is_payment_release']) ? 1 : 0,
+                        !empty($detail['is_petty_cash_slip']) ? 1 : 0,
+                        !empty($detail['is_bizlink_export']) ? 1 : 0
+                    );
+                } catch (Exception $e) {
+                }
             }
 
             return $this->respondSuccess("Approval matrix updated successfully");
@@ -228,7 +229,6 @@ class Approval_Matrix extends MY_Controller
     {
         try{
                 $this->output->set_content_type('application/json');
-                $userId = $this->session->userdata('user_id');
                 $cursorIdRaw = $this->input->post('CursorId');
                 $take = $this->resolvePaginationTake($this->input->post('Take'));
 
@@ -236,16 +236,7 @@ class Approval_Matrix extends MY_Controller
                 if ($cursorIdRaw !== null && $cursorIdRaw !== '') {
                     $cursorId = (int) $cursorIdRaw;
                 }
-                $params = array(
-                    "UserId" => $userId,
-                    "CursorId" => $cursorId,
-                    "Take" => $take,
-                );
-                $result = $this->sp->readData(
-                    build_sp('sp_fetch_approval_matrix_header', count($params)),
-                    $params,
-                    'result'
-                );
+                $result = $this->Approval_matrix_model->list_headers($cursorId, $take);
 
                 $payload = $this->buildPaginationResult($result, $take);
                 echo json_encode(array('status' => 'success') + $payload);
@@ -269,14 +260,7 @@ class Approval_Matrix extends MY_Controller
             if ($matrixId === null) {
                 return $this->respondError("MatrixId is required");
             }
-            $params = array(
-                "MatrixId" => $matrixId,
-            );
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_approval_matrix_details', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Approval_matrix_model->list_details($matrixId);
 
             return $this->respondSuccess("success", $result);
         }catch(Exception $e){
@@ -292,14 +276,7 @@ class Approval_Matrix extends MY_Controller
             if ($id <= 0) {
                 return $this->respondError("Invalid MatrixId");
             }
-            $params = array(
-                "MatrixId" => $id,
-            );
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_approval_matrix_header_by_id', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Approval_matrix_model->get_header_rows($id);
 
             if (empty($result)) {
                 return $this->respondError("Approval matrix not found");

@@ -315,7 +315,8 @@
 							<th>Liquidation No</th>
 							<th>Reference</th>						
 							<th class="text-right">CA Amount</th>							
-							<th class="text-right">Liquidated Amount</th>
+							<th class="text-right">Liquidated (Requested)</th>
+							<th class="text-right">Liquidated (Approved)</th>
 							<th class="text-right">Variance</th>
 							<th>Submitted</th>
 							<th>Status</th>

@@ -9,6 +9,7 @@ class Cost_Center extends MY_Controller
         parent::__construct();
         $this->load->model('SPModel', 'sp');
         $this->sp->setDatabase('dbknet');
+        $this->load->model('Cost_center_model');
     }
 
     public function index()
@@ -38,16 +39,7 @@ class Cost_Center extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_maintenance_cost_center', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Cost_center_model->list_paged($cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take);
 
@@ -88,18 +80,18 @@ class Cost_Center extends MY_Controller
                 return $this->respondError('Category must be SD or GA');
             }
 
-            $params = array(
-                'CostCenterCode' => $costCenterCode,
-                'CostCenterName' => $costCenterName,
-                'Category'       => $category,
-                'IsActive'       => $isActive ? 1 : 0,
-                'CreatedBy'      => (int) $this->session->userdata('user_id'),
-            );
-
-            $result = $this->sp->createData(
-                build_sp('sp_insert_maintenance_cost_center', count($params)),
-                $params
-            );
+            try {
+                $this->Cost_center_model->create(
+                    $costCenterCode,
+                    $costCenterName,
+                    $category,
+                    $isActive ? 1 : 0,
+                    (int) $this->session->userdata('user_id')
+                );
+                $result = true;
+            } catch (Exception $e) {
+                $result = $e->getMessage();
+            }
 
             if ($result === true) {
                 return $this->respondSuccess('Cost center added successfully');
@@ -140,19 +132,19 @@ class Cost_Center extends MY_Controller
                 return $this->respondError('Category must be SD or GA');
             }
 
-            $params = array(
-                'Id'             => $id,
-                'CostCenterCode' => $costCenterCode,
-                'CostCenterName' => $costCenterName,
-                'Category'       => $category,
-                'IsActive'       => $isActive ? 1 : 0,
-                'UpdatedBy'      => (int) $this->session->userdata('user_id'),
-            );
-
-            $result = $this->sp->createData(
-                build_sp('sp_update_maintenance_cost_center', count($params)),
-                $params
-            );
+            try {
+                $this->Cost_center_model->update(
+                    $id,
+                    $costCenterCode,
+                    $costCenterName,
+                    $category,
+                    $isActive ? 1 : 0,
+                    (int) $this->session->userdata('user_id')
+                );
+                $result = true;
+            } catch (Exception $e) {
+                $result = $e->getMessage();
+            }
 
             if ($result === true) {
                 return $this->respondSuccess('Cost center updated successfully');

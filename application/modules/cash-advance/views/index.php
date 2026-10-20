@@ -248,7 +248,8 @@
           <thead>
             <tr>
               <th style="min-width:130px;">Cash Advance No</th>
-              <th style="min-width:110px;" class="text-right">Amount</th>
+              <th style="min-width:110px;" class="text-right">Requested Amount</th>
+              <th style="min-width:110px;" class="text-right">Approved Amount</th>
               <th style="min-width:260px;">Purpose</th>
               <th style="min-width:105px;">Needed On</th>
               <th style="min-width:105px;">Requested</th>

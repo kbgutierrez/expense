@@ -308,7 +308,8 @@
 					<thead>
 						<tr>
 							<th style="min-width:140px;">Reimbursement No</th>
-							<th style="min-width:120px;" class="text-right">Total Amount</th>
+							<th style="min-width:120px;" class="text-right">Requested Amount</th>
+							<th style="min-width:120px;" class="text-right">Approved Amount</th>
 							<th style="min-width:105px;">Submitted</th>
 							<th style="min-width:130px;">Status</th>
 							<th style="min-width:150px;" class="text-center">Actions</th>

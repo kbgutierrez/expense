@@ -31,6 +31,8 @@ const formatPHP = (amount) => {
 	return value.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
 };
 
+const formatApprovedPHP = (amount) => (amount === null || amount === undefined ? '—' : formatPHP(amount));
+
 const normalizeDate = (value) => (value ? String(value) : '');
 
 const escapeHtml = (value = '') =>
@@ -68,6 +70,7 @@ const normalizeApiRows = (rows) =>
 		id: Number(row.id),
 		refNo: row.cash_advance_id,
 		amount: Number(row.amount || 0),
+		approvedAmount: row.approved_amount !== null && row.approved_amount !== undefined ? Number(row.approved_amount) : null,
 		requestedDate: String(row.created_date || '').slice(0, 10),
 		neededDate: row.needed_date,
 		status: row.status_name,
@@ -269,7 +272,7 @@ const renderDesktopTable = (rows) => {
 
 	if (!rows.length) {
 		dom.cashAdvanceTbody.innerHTML =
-			'<tr><td colspan="8" class="text-center text-muted">No records found</td></tr>';
+			'<tr><td colspan="9" class="text-center text-muted">No records found</td></tr>';
 		return;
 	}
 
@@ -278,6 +281,7 @@ const renderDesktopTable = (rows) => {
 		tr.innerHTML = `
 			<td style="white-space:nowrap;">${escapeHtml(row.refNo)}</td>
 			<td class="text-right" style="white-space:nowrap;">${formatPHP(row.amount)}</td>
+			<td class="text-right" style="white-space:nowrap;">${formatApprovedPHP(row.approvedAmount)}</td>
 			<td style="white-space:normal;overflow-wrap:break-word;" title="${escapeHtml(row.purpose)}">${escapeHtml(row.purpose)}</td>
 			<td style="white-space:nowrap;">${escapeHtml(row.neededDate)}</td>
 			<td style="white-space:nowrap;">${escapeHtml(row.requestedDate)}</td>
@@ -310,8 +314,12 @@ const renderMobileCards = (rows) => {
 				<div>${getStatusBadge(row.status)}</div>
 			</div>
 			<div class="kna-row">
-				<div class="kna-small text-muted">Amount</div>
+				<div class="kna-small text-muted">Requested Amount</div>
 				<div class="kna-small font-weight-bold">${formatPHP(row.amount)}</div>
+			</div>
+			<div class="kna-row">
+				<div class="kna-small text-muted">Approved Amount</div>
+				<div class="kna-small font-weight-bold">${formatApprovedPHP(row.approvedAmount)}</div>
 			</div>
 			<div class="kna-row">
 				<div class="kna-small text-muted">Needed</div>

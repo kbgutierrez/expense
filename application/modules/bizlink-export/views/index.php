@@ -34,6 +34,31 @@
         white-space: nowrap;
     }
 
+    .kna-table th.kna-sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .kna-table th.kna-sortable:hover {
+        background: #eef3f8;
+    }
+
+    .kna-table th.kna-sortable::after {
+        content: "\2195";
+        margin-left: .35rem;
+        opacity: .35;
+    }
+
+    .kna-table th.kna-sortable.is-sorted-asc::after {
+        content: "\25B2";
+        opacity: 1;
+    }
+
+    .kna-table th.kna-sortable.is-sorted-desc::after {
+        content: "\25BC";
+        opacity: 1;
+    }
+
     .kna-table-shell {
         display: flex;
         width: 100%;
@@ -194,14 +219,14 @@
                         <thead>
                             <tr>
                                 <th style="width:28px;"><input type="checkbox" id="paymentSelectAll"></th>
-                                <th>Transaction No.</th>
-                                <th>Type</th>
-                                <th>Requestor</th>
-                                <th>Department</th>
-                                <th>Amount</th>
-                                <th>Submission Date</th>
-                                <th>Status</th>
-                                <th>Turnaround (Days)</th>
+                                <th class="kna-sortable" data-sort-key="referenceNo" aria-sort="none">Transaction No.</th>
+                                <th class="kna-sortable" data-sort-key="transactionType" aria-sort="none">Type</th>
+                                <th class="kna-sortable" data-sort-key="requestor" aria-sort="none">Requestor</th>
+                                <th class="kna-sortable" data-sort-key="department" aria-sort="none">Department</th>
+                                <th class="kna-sortable" data-sort-key="amount" aria-sort="none">Approved Amount</th>
+                                <th class="kna-sortable" data-sort-key="submittedDate" aria-sort="none">Submission Date</th>
+                                <th class="kna-sortable" data-sort-key="decisionStatus" aria-sort="none">Status</th>
+                                <th class="kna-sortable" data-sort-key="turnaroundDays" aria-sort="none">Turnaround (Days)</th>
                             </tr>
                         </thead>
                         <tbody id="matrixTbodyMain"></tbody>

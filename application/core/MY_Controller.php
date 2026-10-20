@@ -35,19 +35,10 @@ class MY_Controller extends MX_Controller
             $this->load->model('SPModel', 'sp');
              $this->sp->setDatabase('dbknet');
      
-          $params = array(
-                'id' => $this->session->userdata('user_id')
-            );
-            $this->module_group = $this->sp->readData(
-                build_sp('sp_fetch_module_group', count($params)),
-                $params,
-                'result'
-            );
-            $this->module = $this->sp->readData(
-                build_sp('sp_fetch_module', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Portal_model');
+            $userId = $this->session->userdata('user_id');
+            $this->module_group = $this->Portal_model->list_module_groups($userId);
+            $this->module = $this->Portal_model->list_modules($userId);
         }
 
         
@@ -55,22 +46,23 @@ class MY_Controller extends MX_Controller
 
     protected function logAuditTrail($transactionType, $transactionId, $action, $entityType, $entityId, $fieldName = null, $oldValue = null, $newValue = null)
     {
-        $params = array(
-            'TransactionType' => $transactionType,
-            'TransactionId'   => $transactionId,
-            'Action'          => $action,
-            'EntityType'      => $entityType,
-            'EntityId'        => $entityId,
-            'FieldName'       => $fieldName,
-            'OldValue'        => $oldValue,
-            'NewValue'        => $newValue,
-            'ChangedBy'       => (int)$this->session->userdata('user_id'),
-        );
-
-        return $this->sp->createData(
-            build_sp('sp_insert_audit_trail', count($params)),
-            $params
-        );
+        try {
+            $this->load->model('Audit_trail_model');
+            $this->Audit_trail_model->create(
+                $transactionType,
+                $transactionId,
+                $action,
+                $entityType,
+                $entityId,
+                $fieldName,
+                $oldValue,
+                $newValue,
+                (int) $this->session->userdata('user_id')
+            );
+            return TRUE;
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
 
     protected function resolvePaginationTake($takeRaw)

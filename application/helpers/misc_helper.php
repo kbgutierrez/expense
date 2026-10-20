@@ -194,17 +194,8 @@ if (!function_exists('get_user_info')) {
     function get_user_info($id)
     {
         $ci = &get_instance();
-        $ci->load->model('SPModel', 'sp');
-        $ci->sp->setDatabase('dbknet');
-        $params = array(
-          'id' => $id,
-        );
-        $result = ($ci->sp->readData(
-            build_sp('sp_fetch_user_info', count($params)),
-            $params,
-            'row'
-          )
-          );
+        $ci->load->model('Lookup_model');
+        $result = $ci->Lookup_model->get_user_info($id);
 
      return $result;
 

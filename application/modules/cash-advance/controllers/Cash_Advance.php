@@ -9,6 +9,8 @@ class Cash_Advance extends MY_Controller
         parent::__construct();
         $this->load->model('SPModel', 'sp');
         $this->sp->setDatabase('dbknet');
+        $this->load->model('Cash_advance_model');
+        $this->load->model('Lookup_model');
     }
 
     public function index()
@@ -34,15 +36,7 @@ class Cash_Advance extends MY_Controller
 
     private function getPendingCashAdvance($userId)
     {
-        $params = array(
-            'UserId' => $userId,
-        );
-
-        $result = $this->sp->readData(
-            build_sp('sp_fetch_pending_ca_by_user', count($params)),
-            $params,
-            'row'
-        );
+        $result = $this->Cash_advance_model->find_pending_by_user($userId);
 
         if (is_array($result) && isset($result['cash_advance_id']) && !empty($result['cash_advance_id'])) {
             return $result;
@@ -61,11 +55,7 @@ class Cash_Advance extends MY_Controller
                 throw new Exception('Department not found for the logged-in user.');
             }
 
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_payable_to_users', 1),
-                array('DepartmentId' => $departmentId),
-                'result'
-            );
+            $result = $this->Lookup_model->get_payable_to_users($departmentId);
 
             return $this->respondSuccess('OK', is_array($result) ? $result : array());
         } catch (Exception $e) {
@@ -85,15 +75,7 @@ class Cash_Advance extends MY_Controller
         }
 
    
-        $params = array(
-            'departmentId' => $departmentId,
-        );
-
-        $costCenters = $this->sp->readData(
-            build_sp('sp_fetch_cost_center_by_deptid', count($params)),
-            $params,
-            'result'
-        );
+        $costCenters = $this->Lookup_model->get_cost_centers_by_department($departmentId);
 
         $data = array(
             'title' => 'New Cash Advance',
@@ -115,15 +97,7 @@ class Cash_Advance extends MY_Controller
         $resumeKflowUrl = '';
         $caNo = trim((string) $cash_advance_no);
         if ($caNo !== '') {
-            $params = array(
-                'CashAdvanceId' => $caNo,
-            );
-
-            $row = $this->sp->readData(
-                build_sp('sp_fetch_pending_ca_details_by_ca_no', count($params)),
-                $params,
-                'row'
-            );
+            $row = $this->Cash_advance_model->get_details($caNo);
 
             $isOpenCa = is_array($row) && isset($row['status_code']) && trim((string) $row['status_code']) === 'CA_PENDING';
             if ($isOpenCa && isset($row['kflow_doc_status']) && !in_array(trim((string) $row['kflow_doc_status']), array('3', '4', '5'), true)) {
@@ -167,17 +141,7 @@ class Cash_Advance extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "UserId" => $userId,
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_ca', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Cash_advance_model->list_by_user($userId, $cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take);
 
@@ -205,15 +169,7 @@ class Cash_Advance extends MY_Controller
                 return $this->respondError('Missing required field: CashAdvanceId');
             }
 
-            $params = array(
-                'CashAdvanceId' => $cashAdvanceId,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_pending_ca_details_by_ca_no', count($params)),
-                $params,
-                'row'
-            );
+            $result = $this->Cash_advance_model->get_details($cashAdvanceId);
 
             if (!$result) {
                 return $this->respondError('Cash advance not found.');
@@ -238,14 +194,8 @@ class Cash_Advance extends MY_Controller
                 return $this->respondError('Missing ReferenceNo');
             }
 
-            $auditParams = array(
-                'TransactionId' => $referenceNo,
-            );
-            $auditTrail = $this->sp->readData(
-                build_sp('sp_fetch_audit_trail', count($auditParams)),
-                $auditParams,
-                'result'
-            );
+            $this->load->model('Audit_trail_model');
+            $auditTrail = $this->Audit_trail_model->list_by_transaction($referenceNo);
 
             return $this->respondSuccess('Timeline fetched', array(
                 'audit_trail' => is_array($auditTrail) ? $auditTrail : array(),
@@ -451,12 +401,7 @@ class Cash_Advance extends MY_Controller
             $addressLine1 = $addressLines[0] ?? '';
             $addressLine2 = $addressLines[1] ?? '';
 
-            $ccParams = array('CostCenterId' => $data['CostCenterId']);
-            $costCenterRow = $this->sp->readData(
-                build_sp('sp_fetch_cost_center_by_id', 1),
-                $ccParams,
-                'row'
-            );
+            $costCenterRow = $this->Lookup_model->get_cost_center($data['CostCenterId']);
             $costCenterName = $costCenterRow['cost_center_name'] ?? '';
 
             $payableToDisplay = trim((string) $data['PayableTo']);
@@ -510,13 +455,10 @@ class Cash_Advance extends MY_Controller
                             'stored_name' => $safeName,
                         );
 
-                        $attDbParams = array(
-                            'cash_advance_id' => $caRef,
-                            'original_name' => $origName,
-                            'file_name' => $safeName,
-                            'file_path' => $destPath,
-                        );
-                        $this->sp->createData(build_sp('sp_insert_ca_attachment', count($attDbParams)), $attDbParams, 'result');
+                        try {
+                            $this->Cash_advance_model->create_attachment($caRef, $origName, $safeName, $destPath);
+                        } catch (Exception $e) {
+                        }
                     }
                 }
             }
@@ -532,13 +474,10 @@ class Cash_Advance extends MY_Controller
             );
             file_put_contents($batchDir . 'manifest.json', json_encode($manifest, JSON_PRETTY_PRINT));
 
-            $updateParams = array(
-                'cash_advance_id' => $caRef,
-                'kflow_batch_id' => $batchId,
-                'generated_pdf_path' => $pdfOutputPath,
-                'is_kflow_submitted' => 1,
-            );
-            $this->sp->createData(build_sp('sp_update_ca_kflow_batch', count($updateParams)), $updateParams, 'result');
+            try {
+                $this->Cash_advance_model->update_kflow_batch($caRef, $batchId, $pdfOutputPath, 1);
+            } catch (Exception $e) {
+            }
 
             $secret = $this->config->item('kflow_secret_key');
             $token = hash_hmac('sha256', $batchId, $secret);
@@ -730,12 +669,7 @@ class Cash_Advance extends MY_Controller
             return;
         }
 
-        $params = array('kflow_batch_id' => $batchId);
-        $ca = $this->sp->readData(
-            build_sp('sp_fetch_ca_by_batch_id', count($params)),
-            $params,
-            'row'
-        );
+        $ca = $this->Cash_advance_model->find_by_batch_id($batchId);
         $debug['steps']['fetch_ca_by_batch'] = $ca ? 'found' : 'not_found';
 
         if (!$ca) {
@@ -881,26 +815,16 @@ class Cash_Advance extends MY_Controller
         // sp_release_payment) — self-approval can advance it before this
         // callback ever fires, so this callback must not touch it. It only
         // owns the KFlow e-signature fields.
-        $updateParams = array(
-            'cash_advance_id' => $caRef,
-            'kflow_doc_id' => trim((string) $kflowDocId),
-            'kflow_doc_status' => (string) $kflowDocStatusCode,
-            'final_pdf_path' => $finalRelativePath,
-        );
-
-        $spResult = $this->sp->createData(
-            build_sp('sp_update_ca_kflow_status', count($updateParams)),
-            $updateParams,
-            'result'
-        );
+        try {
+            $this->Cash_advance_model->update_kflow_status($caRef, trim((string) $kflowDocId), (string) $kflowDocStatusCode, $finalRelativePath);
+            $spResult = true;
+        } catch (Exception $e) {
+            $spResult = $e->getMessage();
+        }
 
         $debug['steps']['sp_update_ca_kflow_status_result'] = $spResult;
 
-        $verifyCa = $this->sp->readData(
-            build_sp('sp_fetch_ca_by_batch_id', count($params)),
-            $params,
-            'row'
-        );
+        $verifyCa = $this->Cash_advance_model->find_by_batch_id($batchId);
         $savedFinalPath = '';
         if (is_array($verifyCa) && isset($verifyCa['final_pdf_path'])) {
             $savedFinalPath = (string) $verifyCa['final_pdf_path'];
@@ -1015,15 +939,7 @@ class Cash_Advance extends MY_Controller
                 return $this->respondError('Missing required field: CashAdvanceId');
             }
 
-            $params = array(
-                'cash_advance_id' => $cashAdvanceId,
-            );
-
-            $attachments = $this->sp->readData(
-                build_sp('sp_fetch_ca_attachments_by_caid', count($params)),
-                $params,
-                'result'
-            );
+            $attachments = $this->Cash_advance_model->list_attachments($cashAdvanceId);
 
             $processed = array();
             foreach ($attachments as $att) {
@@ -1074,12 +990,7 @@ class Cash_Advance extends MY_Controller
             return;
         }
 
-        $params = array('cash_advance_id' => $caRef);
-        $attachments = $this->sp->readData(
-            build_sp('sp_fetch_ca_attachments_by_caid', count($params)),
-            $params,
-            'result'
-        );
+        $attachments = $this->Cash_advance_model->list_attachments($caRef);
 
         $target = null;
         foreach ($attachments as $att) {

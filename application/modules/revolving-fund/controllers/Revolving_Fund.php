@@ -39,18 +39,13 @@ class Revolving_Fund extends MY_Controller
             $cursorIdRaw = $this->input->post('CursorId');
             $cursorId = ($cursorIdRaw !== null && $cursorIdRaw !== '') ? (int) $cursorIdRaw : null;
 
-            $params = array(
-                'CursorId' => $cursorId,
-                'Take' => $take,
-                'Keyword' => $this->input->post('Keyword'),
-                'ScopeType' => $this->input->post('ScopeType'),
-                'Status' => $this->input->post('Status'),
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_revolving_fund_list', count($params)),
-                $params,
-                'result'
+            $this->load->model('Revolving_fund_model');
+            $result = $this->Revolving_fund_model->list_funds(
+                $cursorId,
+                $take,
+                $this->input->post('Keyword'),
+                $this->input->post('ScopeType'),
+                $this->input->post('Status')
             );
 
             $payload = $this->buildPaginationResult($result, $take);
@@ -190,19 +185,14 @@ class Revolving_Fund extends MY_Controller
             $fundIdRaw = $this->input->post('FundId');
             $fundId = ($fundIdRaw !== null && $fundIdRaw !== '') ? (int) $fundIdRaw : null;
 
-            $params = array(
-                'CursorId' => $cursorId,
-                'Take' => $take,
-                'FundId' => $fundId,
-                'TrxType' => $this->input->post('TrxType'),
-                'DateFrom' => $this->input->post('DateFrom'),
-                'DateTo' => $this->input->post('DateTo'),
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_revolving_fund_ledger_list', count($params)),
-                $params,
-                'result'
+            $this->load->model('Revolving_fund_model');
+            $result = $this->Revolving_fund_model->list_ledger_entries(
+                $cursorId,
+                $take,
+                $fundId,
+                $this->input->post('TrxType'),
+                $this->input->post('DateFrom'),
+                $this->input->post('DateTo')
             );
 
             $payload = $this->buildPaginationResult($result, $take);
@@ -284,7 +274,8 @@ class Revolving_Fund extends MY_Controller
         try {
             $this->output->set_content_type('application/json');
 
-            $result = $this->sp->fetchData('sp_fetch_department');
+            $this->load->model('Lookup_model');
+            $result = $this->Lookup_model->get_departments();
 
             return $this->respondSuccess('OK', $result);
         } catch (Exception $e) {
@@ -297,7 +288,8 @@ class Revolving_Fund extends MY_Controller
         try {
             $this->output->set_content_type('application/json');
 
-            $result = $this->sp->fetchData('sp_fetch_approvers');
+            $this->load->model('Approval_matrix_model');
+            $result = $this->Approval_matrix_model->list_approvers();
 
             return $this->respondSuccess('OK', $result);
         } catch (Exception $e) {

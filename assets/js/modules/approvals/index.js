@@ -261,7 +261,9 @@ const goToDesktopPage = (targetPage) => {
 
 const isPastTab = () => selectedApprovalTab === 'past';
 const isPaymentTab = () => selectedApprovalTab === 'payment';
-const isBatchSelectableTab = () => isPaymentTab() || isPastTab();
+const isPendingTab = () => selectedApprovalTab === 'pending';
+const hasPettyCashSlipButton = () => Boolean(document.getElementById('btnDownloadBatchPettyCashSlips'));
+const isBatchSelectableTab = () => isPaymentTab() || isPastTab() || (isPendingTab() && hasPettyCashSlipButton());
 
 const getAgingBadgeHtml = (days) => {
 	if (days === null || days === undefined) {
@@ -472,7 +474,7 @@ const updateApprovalTabChrome = () => {
 	}
 	const btnDownloadBatchPettyCashSlipsEl = document.getElementById('btnDownloadBatchPettyCashSlips');
 	if (btnDownloadBatchPettyCashSlipsEl) {
-		btnDownloadBatchPettyCashSlipsEl.classList.toggle('d-none', !isPastTab());
+		btnDownloadBatchPettyCashSlipsEl.classList.toggle('d-none', !(isPastTab() || isPendingTab()));
 	}
 	if (!isBatchSelectableTab()) {
 		paymentSelectedRefs.clear();
@@ -507,6 +509,7 @@ const switchApprovalTab = (tab) => {
 
 	selectedApprovalTab = tab;
 	approvalsDesktopPage = 1;
+	paymentSelectedRefs.clear();
 	updateApprovalTabChrome();
 
 	const tabState = approvalsTabState[tab];
@@ -788,6 +791,7 @@ const initListPage = () => {
 		});
 	}
 
+	updateApprovalTabChrome();
 	loadApprovals(true);
 };
 

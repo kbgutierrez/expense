@@ -13,6 +13,8 @@ class Bank_Account_Masterlist extends MY_Controller
         parent::__construct();
         $this->load->model('SPModel', 'sp');
         $this->sp->setDatabase('dbknet');
+        $this->load->model('Bank_account_model');
+        $this->load->model('Bizlink_model');
     }
 
     public function index()
@@ -63,17 +65,11 @@ class Bank_Account_Masterlist extends MY_Controller
             $cursorIdRaw = $this->input->post('CursorId');
             $cursorId = ($cursorIdRaw !== null && $cursorIdRaw !== '') ? (int) $cursorIdRaw : null;
 
-            $params = array(
-                'Keyword' => $keyword !== '' ? $keyword : null,
-                'CursorId' => $cursorId,
-                'Page' => $page,
-                'PageSize' => $pageSize,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_bank_account_masterlist', count($params)),
-                $params,
-                'result'
+            $result = $this->Bank_account_model->list_masterlist(
+                $keyword !== '' ? $keyword : null,
+                $cursorId,
+                $page,
+                $pageSize
             );
             $result = is_array($result) ? $result : array();
 
@@ -107,11 +103,7 @@ class Bank_Account_Masterlist extends MY_Controller
 
             $keyword = trim((string) $this->input->post('Keyword'));
 
-            $rows = $this->sp->readData(
-                build_sp('sp_fetch_bank_account_employee_options', 1),
-                array('Keyword' => $keyword !== '' ? $keyword : null),
-                'result'
-            );
+            $rows = $this->Bank_account_model->list_employee_options($keyword !== '' ? $keyword : null);
 
             return $this->respondSuccess('OK', is_array($rows) ? $rows : array());
         } catch (\Throwable $e) {
@@ -138,11 +130,7 @@ class Bank_Account_Masterlist extends MY_Controller
             throw new \Exception('Account number format looks invalid.');
         }
 
-        $matched = $this->sp->readData(
-            build_sp('sp_fetch_bank_account_employee_by_code', 1),
-            array('Empcode' => $empcode),
-            'row'
-        );
+        $matched = $this->Bank_account_model->find_employee_by_code($empcode);
         if (!is_array($matched) || empty($matched['empcode'])) {
             throw new \Exception('Employee code "' . $empcode . '" was not found among active employees.');
         }
@@ -228,11 +216,7 @@ class Bank_Account_Masterlist extends MY_Controller
                 return $this->respondError('Invalid record.');
             }
 
-            $row = $this->sp->readData(
-                build_sp('sp_reveal_bank_account_number', 1),
-                array('Id' => $id),
-                'row'
-            );
+            $row = $this->Bank_account_model->reveal_account_number($id);
 
             if (!is_array($row) || empty($row['id'])) {
                 return $this->respondError('Record not found.');
@@ -276,11 +260,7 @@ class Bank_Account_Masterlist extends MY_Controller
                 return $this->respondError('Invalid record.');
             }
 
-            $this->sp->readData(
-                build_sp('sp_toggle_bank_account_masterlist_active', 3),
-                array('Id' => $id, 'IsActive' => $isActive, 'UserId' => $userId),
-                'row'
-            );
+            $this->Bank_account_model->toggle_active($id, $isActive, $userId);
 
             $this->logAuditTrail(
                 'BANK_ACCOUNT_MASTERLIST',
@@ -407,11 +387,7 @@ class Bank_Account_Masterlist extends MY_Controller
         try {
             $this->output->set_content_type('application/json');
 
-            $row = $this->sp->readData(
-                'EXEC sp_fetch_bizlink_company_settings',
-                array(),
-                'row'
-            );
+            $row = $this->Bizlink_model->get_company_settings();
 
             if (!is_array($row) || empty($row['id'])) {
                 return $this->respondSuccess('OK', array(
@@ -448,11 +424,7 @@ class Bank_Account_Masterlist extends MY_Controller
                 return $this->respondError('User not authenticated.');
             }
 
-            $row = $this->sp->readData(
-                'EXEC sp_fetch_bizlink_company_settings',
-                array(),
-                'row'
-            );
+            $row = $this->Bizlink_model->get_company_settings();
 
             if (!is_array($row) || empty($row['id']) || $row['company_account_number'] === null) {
                 return $this->respondError('No company account number is on file yet.');
@@ -511,28 +483,18 @@ class Bank_Account_Masterlist extends MY_Controller
                 }
                 $encrypted = bank_account_encrypt($accountNumber);
             } else {
-                $existing = $this->sp->readData(
-                    'EXEC sp_fetch_bizlink_company_settings',
-                    array(),
-                    'row'
-                );
+                $existing = $this->Bizlink_model->get_company_settings();
                 if (!is_array($existing) || empty($existing['company_account_number'])) {
                     return $this->respondError('Company Account Number is required.');
                 }
                 $encrypted = $existing['company_account_number'];
             }
 
-            $params = array(
-                'CompanyCode' => $companyCode,
-                'CompanyAccountNumberEncrypted' => $encrypted,
-                'PresentingOfficeCode' => $presentingOfficeCode,
-                'UserId' => $userId,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_save_bizlink_company_settings', count($params)),
-                $params,
-                'row'
+            $result = $this->Bizlink_model->save_company_settings(
+                $companyCode,
+                $encrypted,
+                $presentingOfficeCode,
+                $userId
             );
 
             if (!is_array($result) || empty($result['id'])) {

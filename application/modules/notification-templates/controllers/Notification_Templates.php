@@ -74,8 +74,7 @@ class Notification_Templates extends MY_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('SPModel', 'sp');
-        $this->sp->setDatabase('dbknet');
+        $this->load->model('Notification_model');
     }
 
     public function index()
@@ -134,12 +133,7 @@ class Notification_Templates extends MY_Controller
             $cursorIdRaw = $this->input->post('CursorId');
             $cursorId = ($cursorIdRaw !== null && $cursorIdRaw !== '') ? (int) $cursorIdRaw : null;
 
-            $params = array('CursorId' => $cursorId, 'Take' => $take);
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_notification_templates', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Notification_model->list_templates($cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take);
             echo json_encode(array('status' => 'success') + $payload);
@@ -157,12 +151,7 @@ class Notification_Templates extends MY_Controller
                 return $this->respondError('Invalid template id.');
             }
 
-            $params = array('Id' => $id);
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_notification_template_by_id', count($params)),
-                $params,
-                'row'
-            );
+            $result = $this->Notification_model->find_template($id);
 
             if (empty($result)) {
                 return $this->respondError('Template not found.');
@@ -185,17 +174,16 @@ class Notification_Templates extends MY_Controller
                 return $this->respondError($error);
             }
 
-            $params = array(
-                'event_code' => $data['event_code'],
-                'transaction_type' => !empty($data['transaction_type']) ? $data['transaction_type'] : null,
-                'subject' => $data['subject'],
-                'body_html' => $data['body_html'],
-                'created_by' => (int) $this->session->userdata('user_id'),
-            );
-
-            $result = $this->sp->createData(build_sp('sp_insert_notification_template', count($params)), $params);
-            if ($result !== true) {
-                return $this->respondError(is_string($result) ? $result : 'Failed to save the notification template.');
+            try {
+                $this->Notification_model->create_template(
+                    $data['event_code'],
+                    !empty($data['transaction_type']) ? $data['transaction_type'] : null,
+                    $data['subject'],
+                    $data['body_html'],
+                    (int) $this->session->userdata('user_id')
+                );
+            } catch (Exception $e) {
+                return $this->respondError($e->getMessage() !== '' ? $e->getMessage() : 'Failed to save the notification template.');
             }
 
             return $this->respondSuccess('Notification template created successfully.');
@@ -220,19 +208,18 @@ class Notification_Templates extends MY_Controller
                 return $this->respondError($error);
             }
 
-            $params = array(
-                'id' => $id,
-                'event_code' => $data['event_code'],
-                'transaction_type' => !empty($data['transaction_type']) ? $data['transaction_type'] : null,
-                'subject' => $data['subject'],
-                'body_html' => $data['body_html'],
-                'is_active' => isset($data['is_active']) ? (int) $data['is_active'] : 1,
-                'updated_by' => (int) $this->session->userdata('user_id'),
-            );
-
-            $result = $this->sp->createData(build_sp('sp_update_notification_template', count($params)), $params);
-            if ($result !== true) {
-                return $this->respondError(is_string($result) ? $result : 'Failed to update the notification template.');
+            try {
+                $this->Notification_model->update_template(
+                    $id,
+                    $data['event_code'],
+                    !empty($data['transaction_type']) ? $data['transaction_type'] : null,
+                    $data['subject'],
+                    $data['body_html'],
+                    isset($data['is_active']) ? (int) $data['is_active'] : 1,
+                    (int) $this->session->userdata('user_id')
+                );
+            } catch (Exception $e) {
+                return $this->respondError($e->getMessage() !== '' ? $e->getMessage() : 'Failed to update the notification template.');
             }
 
             return $this->respondSuccess('Notification template updated successfully.');
@@ -427,12 +414,7 @@ class Notification_Templates extends MY_Controller
             $cursorIdRaw = $this->input->post('CursorId');
             $cursorId = ($cursorIdRaw !== null && $cursorIdRaw !== '') ? (int) $cursorIdRaw : null;
 
-            $params = array('CursorId' => $cursorId, 'Take' => $take);
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_notification_log', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Notification_model->list_log($cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take);
             echo json_encode(array('status' => 'success') + $payload);

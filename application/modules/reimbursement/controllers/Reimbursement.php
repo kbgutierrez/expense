@@ -12,6 +12,9 @@ class Reimbursement extends MY_Controller
         parent::__construct();
         $this->load->model('SPModel', 'sp');
         $this->sp->setDatabase('dbknet');
+        $this->load->model('Lookup_model');
+        $this->load->model('Reimbursement_model');
+        $this->load->model('Revolving_fund_model');
     }
 
     public function api_get_payable_to_options()
@@ -24,11 +27,7 @@ class Reimbursement extends MY_Controller
                 throw new Exception('Department not found for the logged-in user.');
             }
 
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_payable_to_users', 1),
-                array('DepartmentId' => $departmentId),
-                'result'
-            );
+            $result = $this->Lookup_model->get_payable_to_users($departmentId);
 
             return $this->respondSuccess('OK', is_array($result) ? $result : array());
         } catch (Exception $e) {
@@ -75,17 +74,7 @@ class Reimbursement extends MY_Controller
                 return $this->respondError('Please select a date range.');
             }
 
-            $params = array(
-                'SupervisorUserId' => $userId,
-                'DateFrom' => $dateFrom,
-                'DateTo' => $dateTo,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_supervisor_team_reimbursement_details', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Reimbursement_model->list_team_details($userId, $dateFrom, $dateTo);
 
             return $this->respondSuccess('OK', $result);
         } catch (Exception $e) {
@@ -95,11 +84,7 @@ class Reimbursement extends MY_Controller
 
     private function getActiveFundForUser($userId)
     {
-        $row = $this->sp->readData(
-            build_sp('sp_fetch_user_active_revolving_fund', 1),
-            array('UserId' => $userId),
-            'row'
-        );
+        $row = $this->Revolving_fund_model->find_active_fund_for_user($userId);
 
         return !empty($row) ? $row : null;
     }
@@ -119,11 +104,7 @@ class Reimbursement extends MY_Controller
 
     private function getTeamForUser($userId)
     {
-        $team = $this->sp->readData(
-            build_sp('sp_fetch_supervisor_team_broad', 1),
-            array('SupervisorUserId' => $userId),
-            'result'
-        );
+        $team = $this->Reimbursement_model->list_supervisor_team($userId);
 
         return is_array($team) ? $team : array();
     }
@@ -147,26 +128,18 @@ class Reimbursement extends MY_Controller
             return;
         }
 
-        $expenseTypes = $this->sp->fetchData('sp_fetch_expense_types');
+        $expenseTypes = $this->Lookup_model->get_expense_types();
         if (!is_array($expenseTypes)) {
             $expenseTypes = array();
         }
 
         $departmentId = $this->session->userdata('user_info')['department_id'];
-        $costCenters = $this->sp->readData(
-            build_sp('sp_fetch_cost_center_by_deptid', 1),
-            array('departmentId' => $departmentId),
-            'result'
-        );
+        $costCenters = $this->Lookup_model->get_cost_centers_by_department($departmentId);
         if (!is_array($costCenters)) {
             $costCenters = array();
         }
 
-        $payableToUsers = $this->sp->readData(
-            build_sp('sp_fetch_payable_to_users', 1),
-            array('DepartmentId' => (int) $departmentId),
-            'result'
-        );
+        $payableToUsers = $this->Lookup_model->get_payable_to_users((int) $departmentId);
         if (!is_array($payableToUsers)) {
             $payableToUsers = array();
         }
@@ -213,12 +186,7 @@ class Reimbursement extends MY_Controller
                 return $this->respondError('You are not allowed to access this reimbursement.');
             }
 
-            $detailParams = array('ReimbursementId' => $reimbursementId);
-            $details = $this->sp->readData(
-                build_sp('sp_fetch_reimbursement_details', count($detailParams)),
-                $detailParams,
-                'result'
-            );
+            $details = $this->Reimbursement_model->list_details($reimbursementId);
 
             $statusCode = isset($header['status_code']) ? trim((string) $header['status_code']) : '';
             $canCorrect = in_array($statusCode, array('RMB_SUBMITTED', 'RMB_PENDING'), true);
@@ -275,27 +243,28 @@ class Reimbursement extends MY_Controller
                 $newAttachment = $this->saveUploadedFile($_FILES['Attachment'], $targetDir, $absoluteDir);
             }
 
-            $params = array(
-                'DetailId' => $detailId,
-                'Description' => trim((string) ($data['Description'] ?? '')),
-                'InvoiceReceiptNo' => trim((string) ($data['InvoiceReceiptNo'] ?? '')),
-                'ActualAmount' => (float) ($data['ActualAmount'] ?? 0),
-                'DocumentDate' => trim((string) ($data['DocumentDate'] ?? '')),
-                'ExpenseCategory' => trim((string) ($data['ExpenseCategory'] ?? '')),
-                'IsVatable' => (int) (bool) ($data['IsVatable'] ?? 0),
-                'NetAmount' => (float) ($data['NetAmount'] ?? 0),
-                'VatAmount' => (float) ($data['VatAmount'] ?? 0),
-                'VendorName' => trim((string) ($data['VendorName'] ?? '')),
-                'VendorAddress' => trim((string) ($data['VendorAddress'] ?? '')),
-                'VendorTin' => trim((string) ($data['VendorTin'] ?? '')),
-                'ApprovedGrossAmount' => null,
-                'Attachment' => $newAttachment,
-            );
+            $description = trim((string) ($data['Description'] ?? ''));
 
-            $result = $this->sp->createData(
-                build_sp('sp_update_reimbursement_detail_review', count($params)),
-                $params
-            );
+            try {
+                $this->Reimbursement_model->update_detail_review(
+                    $detailId,
+                    $description,
+                    trim((string) ($data['InvoiceReceiptNo'] ?? '')),
+                    (float) ($data['ActualAmount'] ?? 0),
+                    trim((string) ($data['DocumentDate'] ?? '')),
+                    trim((string) ($data['ExpenseCategory'] ?? '')),
+                    (int) (bool) ($data['IsVatable'] ?? 0),
+                    (float) ($data['NetAmount'] ?? 0),
+                    (float) ($data['VatAmount'] ?? 0),
+                    trim((string) ($data['VendorName'] ?? '')),
+                    trim((string) ($data['VendorAddress'] ?? '')),
+                    trim((string) ($data['VendorTin'] ?? '')),
+                    null
+                );
+                $result = true;
+            } catch (Exception $e) {
+                $result = $e->getMessage();
+            }
 
             if ($result !== true) {
                 return $this->respondError(is_string($result) ? $result : 'Failed to update line item.');
@@ -309,7 +278,7 @@ class Reimbursement extends MY_Controller
                 $detailId,
                 null,
                 null,
-                'Corrected by supervisor: ' . $params['Description']
+                'Corrected by supervisor: ' . $description
             );
 
             return $this->respondSuccess('Line item corrected successfully.');
@@ -332,19 +301,16 @@ class Reimbursement extends MY_Controller
             $supervisorUserId = (int) $this->session->userdata('user_id');
             $this->assertTeamReimbursementCorrectable($reimbursementId, $supervisorUserId);
 
-            $params = array(
-                'ReferenceNo' => $reimbursementId,
-                'CostCenterId' => trim((string) ($data['CostCenterId'] ?? '')),
-                'PayableTo' => trim((string) ($data['PayableTo'] ?? '')),
-                'Address' => trim((string) ($data['Address'] ?? '')),
-                'UpdatedBy' => $supervisorUserId,
-                'IO' => trim((string) ($data['IO'] ?? '')),
-            );
-
-            $this->sp->createData(
-                build_sp('sp_update_reimbursement_header_fields', count($params)),
-                $params
-            );
+            try {
+                $this->Reimbursement_model->update_header_fields(
+                    $reimbursementId,
+                    trim((string) ($data['CostCenterId'] ?? '')),
+                    trim((string) ($data['Address'] ?? '')),
+                    $supervisorUserId,
+                    trim((string) ($data['IO'] ?? ''))
+                );
+            } catch (Exception $e) {
+            }
 
             $this->logAuditTrail(
                 'REIMBURSEMENT',
@@ -369,27 +335,19 @@ class Reimbursement extends MY_Controller
         $isEditMode = $ref !== '';
 
         $departmentId = $this->session->userdata('user_info')['department_id'];
-        $costCenters = $this->sp->readData(
-            build_sp('sp_fetch_cost_center_by_deptid', 1),
-            array('departmentId' => $departmentId),
-            'result'
-        );
+        $costCenters = $this->Lookup_model->get_cost_centers_by_department($departmentId);
         if (!is_array($costCenters)) {
             $costCenters = array();
         }
 
-        $expenseTypes = $this->sp->fetchData('sp_fetch_expense_types');
+        $expenseTypes = $this->Lookup_model->get_expense_types();
         if (!is_array($expenseTypes)) {
             $expenseTypes = array();
         }
 
         $teamMembers = $this->getTeamForUser((int) $this->session->userdata('user_id'));
 
-        $payableToUsers = $this->sp->readData(
-            build_sp('sp_fetch_payable_to_users', 1),
-            array('DepartmentId' => (int) $departmentId),
-            'result'
-        );
+        $payableToUsers = $this->Lookup_model->get_payable_to_users((int) $departmentId);
         if (!is_array($payableToUsers)) {
             $payableToUsers = array();
         }
@@ -435,6 +393,22 @@ class Reimbursement extends MY_Controller
         $this->load->view('main', $data);
     }
 
+    private function hasApproverApproved($referenceNo)
+    {
+        $row = $this->sp->db->select('D.id')
+            ->from('tbl_approval_header H')
+            ->join('tbl_approval_details D', 'D.approval_header_id = H.id')
+            ->where('H.reference_id', $referenceNo)
+            ->where('H.is_active', 1)
+            ->where('D.is_active', 1)
+            ->where('D.status', 'APPROVED')
+            ->limit(1)
+            ->get()
+            ->row_array();
+
+        return !empty($row);
+    }
+
     public function edit($reimbursement_no = '')
     {
         $ref = trim((string) $reimbursement_no);
@@ -443,17 +417,20 @@ class Reimbursement extends MY_Controller
             return;
         }
 
+        $editHeader = $this->getDraftHeaderByReimbursementId($ref);
+        $editStatus = is_array($editHeader) && isset($editHeader['status_code']) ? trim((string) $editHeader['status_code']) : '';
+        if ($editStatus === 'RMB_SUBMITTED' && $this->hasApproverApproved($ref)) {
+            redirect('transactions/reimbursement/view/' . rawurlencode($ref));
+            return;
+        }
+
         $departmentId = $this->session->userdata('user_info')['department_id'];
-        $costCenters = $this->sp->readData(
-            build_sp('sp_fetch_cost_center_by_deptid', 1),
-            array('departmentId' => $departmentId),
-            'result'
-        );
+        $costCenters = $this->Lookup_model->get_cost_centers_by_department($departmentId);
         if (!is_array($costCenters)) {
             $costCenters = array();
         }
 
-        $expenseTypes = $this->sp->fetchData('sp_fetch_expense_types');
+        $expenseTypes = $this->Lookup_model->get_expense_types();
         if (!is_array($expenseTypes)) {
             $expenseTypes = array();
         }
@@ -495,15 +472,7 @@ class Reimbursement extends MY_Controller
             if ($token !== $secureToken) {
                 return $this->respondError("Unauthorized: Invalid token.", 401);
             }
-            $params = array(
-                "departmentId" => $departmentId,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_expense_types_by_department', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Lookup_model->get_expense_types_by_department($departmentId);
 
             return $this->respondSuccess("success", $result);
         } catch (Exception $e) {
@@ -538,23 +507,9 @@ class Reimbursement extends MY_Controller
             $canEdit = $ageDays <= $this->draftEditWindowDays;
             $statusCode = isset($header['status_code']) ? trim((string) $header['status_code']) : '';
 
-            $detailParams = array(
-                'ReimbursementId' => $reimbursementId,
-            );
-            $details = $this->sp->readData(
-                build_sp('sp_fetch_reimbursement_details', count($detailParams)),
-                $detailParams,
-                'result'
-            );
+            $details = $this->Reimbursement_model->list_details($reimbursementId);
 
-            $approvalParams = array(
-                'ReimbursementId' => $reimbursementId,
-            );
-            $approvals = $this->sp->readData(
-                build_sp('sp_fetch_reimbursement_approvals', count($approvalParams)),
-                $approvalParams,
-                'result'
-            );
+            $approvals = $this->Reimbursement_model->list_approvals($reimbursementId);
 
             $approvalMap = array();
             if (is_array($approvals)) {
@@ -656,11 +611,7 @@ class Reimbursement extends MY_Controller
 
             $payableToUserId = isset($data['PayableTo']) ? (int) $data['PayableTo'] : 0;
             if ($payableToUserId > 0) {
-                $allowedPayableTo = $this->sp->readData(
-                    build_sp('sp_fetch_payable_to_users', 1),
-                    array('DepartmentId' => (int) ($userInfo['department_id'] ?? 0)),
-                    'result'
-                );
+                $allowedPayableTo = $this->Lookup_model->get_payable_to_users((int) ($userInfo['department_id'] ?? 0));
                 $isAllowedPayableTo = false;
                 foreach ((is_array($allowedPayableTo) ? $allowedPayableTo : array()) as $payableUser) {
                     if ((int) ($payableUser['id'] ?? 0) === $payableToUserId) {
@@ -696,34 +647,33 @@ class Reimbursement extends MY_Controller
                     return $this->respondError('Draft edit window has expired.');
                 }
 
-                $updateHeaderParams = array(
-                    'ReimbursementId' => $requestedReimbursementId,
-                    'UserId' => $createdById,
-                    'TotalAmount' => $totalAmount,
-                    'StatusCode' => $statusCode,
-                    'Description' => $description,
-                    'CostCenterId' => $costCenterId,
-                    'PayableTo' => $payableTo,
-                    'Address' => $address,
-                    'IoNumber' => $ioNumber,
-                );
-
-                $updateHeaderResult = $this->sp->createData(
-                    build_sp('sp_update_reimbursement_header_draft', count($updateHeaderParams)),
-                    $updateHeaderParams
-                );
+                try {
+                    $this->Reimbursement_model->update_draft_header(
+                        $requestedReimbursementId,
+                        $createdById,
+                        $totalAmount,
+                        $statusCode,
+                        $description,
+                        $costCenterId,
+                        $payableTo,
+                        $address,
+                        $ioNumber
+                    );
+                    $updateHeaderResult = TRUE;
+                } catch (Exception $e) {
+                    $updateHeaderResult = $e->getMessage();
+                }
 
                 if ($updateHeaderResult !== TRUE) {
                     return $this->respondError('Failed to update draft reimbursement header.');
                 }
 
-                $deleteDetailParams = array(
-                    'ReimbursementId' => $requestedReimbursementId,
-                );
-                $deleteDetailResult = $this->sp->createData(
-                    build_sp('sp_delete_reimbursement_details_by_reimbursement_id', count($deleteDetailParams)),
-                    $deleteDetailParams
-                );
+                try {
+                    $this->Reimbursement_model->delete_details($requestedReimbursementId);
+                    $deleteDetailResult = TRUE;
+                } catch (Exception $e) {
+                    $deleteDetailResult = $e->getMessage();
+                }
 
                 if ($deleteDetailResult !== TRUE) {
                     return $this->respondError('Failed to refresh draft expense details.');
@@ -943,6 +893,10 @@ class Reimbursement extends MY_Controller
                 return $this->respondError('Only submitted or rejected reimbursements can be updated.');
             }
 
+            if ($existingStatus === 'RMB_SUBMITTED' && $this->hasApproverApproved($reimbursementId)) {
+                return $this->respondError('This reimbursement can no longer be edited because an approver has already approved it.');
+            }
+
             if (!isset($data['Expenses']) || !is_array($data['Expenses']) || count($data['Expenses']) === 0) {
                 return $this->respondError('Missing required field: Expenses');
             }
@@ -960,35 +914,28 @@ class Reimbursement extends MY_Controller
             $address = isset($data['Address']) ? trim((string) $data['Address']) : '';
             $ioNumber = isset($data['IoNumber']) ? trim((string) $data['IoNumber']) : '';
 
-            $updateHeaderParams = array(
-                'ReimbursementId' => $reimbursementId,
-                'UserId' => $createdById,
-                'TotalAmount' => $totalAmount,
-                'StatusCode' => $statusCode,
-                'Description' => $description,
-                'CostCenterId' => $costCenterId,
-                'PayableTo' => $payableTo,
-                'Address' => $address,
-                'IoNumber' => $ioNumber,
-            );
-
-            $updateHeaderResult = $this->sp->createData(
-                build_sp('sp_update_reimbursement_header_submitted', count($updateHeaderParams)),
-                $updateHeaderParams
-            );
+            try {
+                $this->Reimbursement_model->update_submitted_header(
+                    $reimbursementId,
+                    $createdById,
+                    $totalAmount,
+                    $statusCode,
+                    $description,
+                    $costCenterId,
+                    $payableTo,
+                    $address,
+                    $ioNumber
+                );
+                $updateHeaderResult = TRUE;
+            } catch (Exception $e) {
+                $updateHeaderResult = $e->getMessage();
+            }
 
             if ($updateHeaderResult !== TRUE) {
                 return $this->respondError('Failed to update reimbursement header.');
             }
 
-            $approvalParams = array(
-                'ReimbursementId' => $reimbursementId,
-            );
-            $approvals = $this->sp->readData(
-                build_sp('sp_fetch_reimbursement_approvals', count($approvalParams)),
-                $approvalParams,
-                'result'
-            );
+            $approvals = $this->Reimbursement_model->list_approvals($reimbursementId);
 
             $approvedItemIds = array();
             $itemApprovalStatus = array();
@@ -1018,14 +965,12 @@ class Reimbursement extends MY_Controller
                 }
             }
 
-            $deleteDetailParams = array(
-                'ReimbursementId' => $reimbursementId,
-                'KeepItemIds' => implode(',', $approvedItemIds),
-            );
-            $deleteDetailResult = $this->sp->createData(
-                build_sp('sp_delete_reimbursement_details_except_approved', count($deleteDetailParams)),
-                $deleteDetailParams
-            );
+            try {
+                $this->Reimbursement_model->delete_details_except($reimbursementId, implode(',', $approvedItemIds));
+                $deleteDetailResult = TRUE;
+            } catch (Exception $e) {
+                $deleteDetailResult = $e->getMessage();
+            }
 
             if ($deleteDetailResult !== TRUE) {
                 return $this->respondError('Failed to refresh expense details.');
@@ -1116,17 +1061,7 @@ class Reimbursement extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "UserId" => $userId,
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_reimbursement_list', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Reimbursement_model->list_by_user($userId, $cursorId, $take);
 
             $hasMore = count($result) > $take;
             if ($hasMore) {
@@ -1214,14 +1149,8 @@ class Reimbursement extends MY_Controller
                 return $this->respondError('Missing ReferenceNo');
             }
 
-            $auditParams = array(
-                'TransactionId' => $referenceNo,
-            );
-            $auditTrail = $this->sp->readData(
-                build_sp('sp_fetch_audit_trail', count($auditParams)),
-                $auditParams,
-                'result'
-            );
+            $this->load->model('Audit_trail_model');
+            $auditTrail = $this->Audit_trail_model->list_by_transaction($referenceNo);
 
             return $this->respondSuccess('Timeline fetched', array(
                 'audit_trail' => is_array($auditTrail) ? $auditTrail : array(),
@@ -1234,21 +1163,7 @@ class Reimbursement extends MY_Controller
 
     private function getDraftHeaderByReimbursementId($reimbursementId)
     {
-        $params = array(
-            'ReimbursementId' => $reimbursementId,
-        );
-
-        $result = $this->sp->readData(
-            build_sp('sp_fetch_reimbursement_header_by_reimbursement_id', count($params)),
-            $params,
-            'result'
-        );
-
-        if (!is_array($result) || count($result) === 0) {
-            return null;
-        }
-
-        return $result[0];
+        return $this->Reimbursement_model->find_header($reimbursementId);
     }
 
     private function getDraftAgeDays($createdDate)

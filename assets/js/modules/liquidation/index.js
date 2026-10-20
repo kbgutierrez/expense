@@ -18,6 +18,8 @@ const normalizeApiRows = (rows) =>
 		caAmount: Number(row.ca_amount || 0),
 		description: normalizeDate(row.description || ''),
 		liquidatedAmount: Number(row.total_amount_spent || 0),
+		approvedAmount: row.approved_liquidated_amount !== null && row.approved_liquidated_amount !== undefined ? Number(row.approved_liquidated_amount) : null,
+		hasApproval: Number(row.has_approval || 0) === 1,
 		refundAmount: Number(row.refund_amount || 0),
 		reimburseAmount: Number(row.reimburse_amount || 0),
 		submittedDate: normalizeDate(row.submitted_date || '').slice(0, 10),
@@ -92,6 +94,8 @@ const formatPHP = (amount) => {
 	const value = Number(amount || 0);
 	return value.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
 };
+
+const formatApprovedPHP = (amount) => (amount === null || amount === undefined ? '—' : formatPHP(amount));
 
 const normalizeDate = (value) => (value ? String(value) : '');
 
@@ -249,7 +253,7 @@ const renderDesktopTable = (rows) => {
 
 	if (!rows.length) {
 		domList.liquidationTbody.innerHTML =
-			'<tr><td colspan="7" class="text-center text-muted">No records found</td></tr>';
+			'<tr><td colspan="9" class="text-center text-muted">No records found</td></tr>';
 		return;
 	}
 
@@ -257,7 +261,7 @@ const renderDesktopTable = (rows) => {
 		const isDraft = row.statusCode === 'LQ_DRAFT' || row.status === 'Draft';
 		const actionButton = isDraft
 			? `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="edit" data-ref="${escapeHtml(row.liquidationNo)}">Edit Draft</button>`
-			: (row.status === 'Submitted' || row.status === 'Pending Approval')
+			: ((row.status === 'Submitted' || row.status === 'Pending Approval') && !row.hasApproval)
 				? `<button type="button" class="btn btn-sm btn-outline-warning" data-action="edit-submitted" data-ref="${escapeHtml(row.liquidationNo)}">Edit</button>
            <button type="button" class="btn btn-sm btn-outline-primary" data-action="view" data-ref="${escapeHtml(row.liquidationNo)}">View</button>`
 				: `<button type="button" class="btn btn-sm btn-outline-primary" data-action="view" data-ref="${escapeHtml(row.liquidationNo)}">View</button>`;
@@ -267,6 +271,7 @@ const renderDesktopTable = (rows) => {
 			<td>${escapeHtml(row.cashAdvanceRef)}</td>
 			<td class="text-right">${formatPHP(row.caAmount)}</td>
 			<td class="text-right">${formatPHP(row.liquidatedAmount)}</td>
+			<td class="text-right">${formatApprovedPHP(row.approvedAmount)}</td>
 			<td class="text-right">${escapeHtml(varianceLabel(row))}</td>
 			<td>${escapeHtml(row.submittedDate)}</td>
 			<td>${getStatusBadge(row.status)}</td>
@@ -352,7 +357,7 @@ const renderMobileCards = (rows) => {
 		const isDraft = row.statusCode === 'LQ_DRAFT' || row.status === 'Draft';
 		const actionButton = isDraft
 			? `<button type="button" class="btn btn-outline-secondary btn-sm kna-small w-100" data-action="edit" data-ref="${escapeHtml(row.liquidationNo)}">Edit Draft</button>`
-			: (row.status === 'Submitted' || row.status === 'Pending Approval')
+			: ((row.status === 'Submitted' || row.status === 'Pending Approval') && !row.hasApproval)
 				? `<button type="button" class="btn btn-outline-warning btn-sm kna-small w-100 mb-1" data-action="edit-submitted" data-ref="${escapeHtml(row.liquidationNo)}">Edit</button>
            <button type="button" class="btn btn-outline-primary btn-sm kna-small w-100" data-action="view" data-ref="${escapeHtml(row.liquidationNo)}">View Details</button>`
 				: `<button type="button" class="btn btn-outline-primary btn-sm kna-small w-100" data-action="view" data-ref="${escapeHtml(row.liquidationNo)}">View Details</button>`;
@@ -372,8 +377,12 @@ const renderMobileCards = (rows) => {
 				<div class="kna-small">${formatPHP(row.caAmount)}</div>
 			</div>
 			<div class="kna-row">
-				<div class="kna-small text-muted">Liquidated</div>
+				<div class="kna-small text-muted">Liquidated (Requested)</div>
 				<div class="kna-small font-weight-bold">${formatPHP(row.liquidatedAmount)}</div>
+			</div>
+			<div class="kna-row">
+				<div class="kna-small text-muted">Liquidated (Approved)</div>
+				<div class="kna-small font-weight-bold">${formatApprovedPHP(row.approvedAmount)}</div>
 			</div>
 			${actionButton}
 		`;

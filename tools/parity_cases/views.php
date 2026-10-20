@@ -1,0 +1,48 @@
+<?php
+if (!defined('BASEPATH')) exit('No direct script access allowed');
+
+return array(
+    array('view' => 'vw_approvals_header', 'order' => 'approval_detail_id, reference_no, department'),
+    array('view' => 'vw_cost_center', 'order' => 'id'),
+    array('view' => 'vw_expense_types', 'order' => 'id'),
+    array('view' => 'vw_lq_details', 'order' => 'id, category_name, category'),
+    array('view' => 'vw_lq_header', 'order' => 'id, cost_center_name'),
+    array('view' => 'vw_rf_assignment_list', 'order' => 'id'),
+    array('view' => 'vw_rf_fund_list', 'order' => 'id'),
+    array('view' => 'vw_rf_ledger_list', 'order' => 'id'),
+    array('view' => 'vw_rmb_details', 'order' => 'id, category_name, category'),
+    array('view' => 'vw_rmb_header', 'order' => 'id'),
+    array('view' => 'vw_rpl_header', 'order' => 'id'),
+
+    array('function' => 'fn_approved_amount', 'args' => array('CA2026101500002'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('CA2026071400001'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('CA2026071400001          '), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('ca2026071400001'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('CA0000000000000'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('LQ2026101500001'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('LQ2026072700001'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('LQ0000000000000'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('RMB2026101500001'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('RMB2026072200002'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('RMB0000000000000'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('RPL2026101500001'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array('XX2026101500001'), 'expr' => 'fn_approved_amount'),
+    array('function' => 'fn_approved_amount', 'args' => array(''), 'expr' => 'fn_approved_amount'),
+
+
+    array('function' => 'fn_levenshtein', 'args' => array('kitten', 'sitting'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('Juan Dela Cruz', 'Juan Dela Cruz'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('ABC Trading', 'abc trading'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('', 'hello'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('hello', ''), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('', ''), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('abc   ', 'abc'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('   ', 'xy'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('  abc', 'abc'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array(str_repeat('a', 100), str_repeat('b', 100)), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array(str_repeat('a', 101), 'a'), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array(str_repeat('a', 150), ''), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array(str_repeat('a', 100) . '     ', str_repeat('a', 99)), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array(str_repeat('x', 250), ''), 'php' => 'levenshtein'),
+    array('function' => 'fn_levenshtein', 'args' => array('Lemon Square Corp.', 'Lemonsquare Corporation'), 'php' => 'levenshtein'),
+);

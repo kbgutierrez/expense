@@ -159,11 +159,8 @@ class Dashboard extends MY_Controller
                 return $this->respondError('User not authenticated.');
             }
 
-            $rows = $this->sp->readData(
-                build_sp('sp_fetch_favorite_modules', 1),
-                array('UserId' => $userId),
-                'result'
-            );
+            $this->load->model('Portal_model');
+            $rows = $this->Portal_model->list_favorite_modules($userId);
 
             return $this->respondSuccess('OK', is_array($rows) ? $rows : array());
         } catch (\Throwable $e) {
@@ -198,15 +195,12 @@ class Dashboard extends MY_Controller
                 return $this->respondError('You do not have access to this module.');
             }
 
-            $result = $this->sp->readData(
-                build_sp('sp_toggle_favorite_module', 4),
-                array(
-                    'UserId' => $userId,
-                    'ModuleName' => $moduleName,
-                    'ModuleRoute' => $moduleRoute,
-                    'ModuleGroup' => $moduleGroup !== '' ? $moduleGroup : null,
-                ),
-                'row'
+            $this->load->model('Portal_model');
+            $result = $this->Portal_model->toggle_favorite_module(
+                $userId,
+                $moduleName,
+                $moduleRoute,
+                $moduleGroup !== '' ? $moduleGroup : null
             );
 
             return $this->respondSuccess('OK', array(
@@ -227,7 +221,8 @@ class Dashboard extends MY_Controller
                 return $this->respondError('Not authorized.');
             }
 
-            $rows = $this->sp->fetchData('sp_fetch_overdue_liquidation_ca');
+            $this->load->model('Cash_advance_model');
+            $rows = $this->Cash_advance_model->list_overdue_liquidations();
             $rows = is_array($rows) ? $rows : array();
 
             return $this->respondSuccess('OK', array('rows' => $rows));
@@ -255,7 +250,8 @@ class Dashboard extends MY_Controller
                 throw new Exception('No cash advances selected.');
             }
 
-            $rows = $this->sp->fetchData('sp_fetch_overdue_liquidation_ca');
+            $this->load->model('Cash_advance_model');
+            $rows = $this->Cash_advance_model->list_overdue_liquidations();
             $rows = is_array($rows) ? $rows : array();
             $byRef = array();
             foreach ($rows as $row) {
@@ -336,17 +332,12 @@ class Dashboard extends MY_Controller
                 throw new Exception('Remarks are required when extending a due date.');
             }
 
-            $params = array(
-                'CashAdvanceId' => $cashAdvanceId,
-                'NewDueDate' => date('Y-m-d', strtotime($newDueDate)),
-                'Remarks' => $remarks,
-                'UserId' => $userId,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_extend_ca_liquidation_due', count($params)),
-                $params,
-                'row'
+            $this->load->model('Cash_advance_model');
+            $result = $this->Cash_advance_model->extend_liquidation_due(
+                $cashAdvanceId,
+                date('Y-m-d', strtotime($newDueDate)),
+                $remarks,
+                $userId
             );
 
             if (!is_array($result) || empty($result['cash_advance_id'])) {
@@ -364,11 +355,8 @@ class Dashboard extends MY_Controller
 
     private function getActiveFundForUser($userId)
     {
-        $row = $this->sp->readData(
-            build_sp('sp_fetch_user_active_revolving_fund', 1),
-            array('UserId' => $userId),
-            'row'
-        );
+        $this->load->model('Revolving_fund_model');
+        $row = $this->Revolving_fund_model->find_active_fund_for_user($userId);
 
         return !empty($row) ? $row : null;
     }
@@ -456,20 +444,8 @@ class Dashboard extends MY_Controller
                 $take = 20;
             }
 
-            $params = array(
-                'CursorId' => $cursorId,
-                'Take' => $take,
-                'FundId' => (int) $fund['id'],
-                'TrxType' => null,
-                'DateFrom' => null,
-                'DateTo' => null,
-            );
-
-            $rows = $this->sp->readData(
-                build_sp('sp_fetch_revolving_fund_ledger_list', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Revolving_fund_model');
+            $rows = $this->Revolving_fund_model->list_ledger_entries($cursorId, $take, (int) $fund['id']);
             $rows = is_array($rows) ? $rows : array();
 
             $hasMore = count($rows) > $take;

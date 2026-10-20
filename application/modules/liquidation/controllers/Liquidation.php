@@ -73,15 +73,9 @@ class Liquidation extends MY_Controller
         try {
             $this->output->set_content_type('application/json');
             $userId = $this->session->userdata('user_id');
-            $params = array(
-                "UserId" => $userId,
-            );
 
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_pending_ca_nums_by_userid', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Cash_advance_model');
+            $result = $this->Cash_advance_model->list_unliquidated_by_user($userId);
 
             return $this->respondSuccess("success", $result);
 
@@ -362,21 +356,14 @@ class Liquidation extends MY_Controller
 
     private function getDraftHeaderByLiquidationId($liquidationId)
     {
-        $params = array(
-            'LiquidationId' => $liquidationId,
-        );
+        $this->load->model('Liquidation_model');
+        $header = $this->Liquidation_model->find_header($liquidationId);
 
-        $result = $this->sp->readData(
-            build_sp('sp_fetch_liquidation_header_by_liquidation_id', count($params)),
-            $params,
-            'result'
-        );
-
-        if (!is_array($result) || count($result) === 0) {
+        if (!is_array($header) || count($header) === 0) {
             return null;
         }
 
-        return $result[0];
+        return $header;
     }
 
     private function getDraftAgeDays($createdDate)
@@ -424,14 +411,8 @@ class Liquidation extends MY_Controller
             $ageDays = $this->getDraftAgeDays(isset($header['created_date']) ? $header['created_date'] : '');
             $canEdit = $ageDays <= $this->draftEditWindowDays;
 
-            $detailParams = array(
-                'LiquidationId' => $liquidationId,
-            );
-            $details = $this->sp->readData(
-                build_sp('sp_fetch_liquidation_details', count($detailParams)),
-                $detailParams,
-                'result'
-            );
+            $this->load->model('Liquidation_model');
+            $details = $this->Liquidation_model->list_details($liquidationId);
 
             return $this->respondSuccess('success', array(
                 'header' => $header,
@@ -535,15 +516,8 @@ class Liquidation extends MY_Controller
                 }
             }
 
-            $params = array(
-                "CashAdvanceId" => $data['CashAdvanceId'],
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_pending_ca_details_by_ca_no', count($params)),
-                $params,
-                'row'
-            );
+            $this->load->model('Cash_advance_model');
+            $result = $this->Cash_advance_model->get_details($data['CashAdvanceId']);
 
             return $this->respondSuccess("success", $result);
         } catch (Exception $e) {
@@ -569,15 +543,8 @@ class Liquidation extends MY_Controller
             if ($token !== $secureToken) {
                 return $this->respondError("Unauthorized: Invalid token.", 401);
             }
-            $params = array(
-                "departmentId" => $departmentId,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_expense_types_by_department', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Lookup_model');
+            $result = $this->Lookup_model->get_expense_types_by_department($departmentId);
 
             return $this->respondSuccess("success", $result);
         } catch (Exception $e) {
@@ -670,19 +637,13 @@ class Liquidation extends MY_Controller
                     return $this->respondError('Draft edit window has expired.');
                 }
 
-                $updateHeaderParams = array(
-                    'LiquidationId' => $requestedLiquidationId,
-                    'UserId' => $currentUserId,
-                    'TotalAmountSpent' => $totalAmountSpent,
-                    'RefundAmount' => $refundAmount,
-                    'ReimburseAmount' => $reimburseAmount,
-                    'StatusCode' => $statusCode,
-                );
-
-                $updateHeaderResult = $this->sp->createData(
-                    build_sp('sp_update_liquidation_header_draft', count($updateHeaderParams)),
-                    $updateHeaderParams
-                );
+                $this->load->model('Liquidation_model');
+                try {
+                    $this->Liquidation_model->update_draft_header($requestedLiquidationId, $currentUserId, $totalAmountSpent, $refundAmount, $reimburseAmount, $statusCode);
+                    $updateHeaderResult = TRUE;
+                } catch (Exception $e) {
+                    $updateHeaderResult = $e->getMessage();
+                }
                 $this->logAuditTrail(
                     'LIQUIDATION',
                     $liquidationId,
@@ -695,13 +656,12 @@ class Liquidation extends MY_Controller
                     return $this->respondError('Failed to update draft liquidation header.');
                 }
 
-                $deleteDetailParams = array(
-                    'LiquidationId' => $requestedLiquidationId,
-                );
-                $deleteDetailResult = $this->sp->createData(
-                    build_sp('sp_delete_liquidation_details_by_liquidation_id', count($deleteDetailParams)),
-                    $deleteDetailParams
-                );
+                try {
+                    $this->Liquidation_model->delete_details($requestedLiquidationId);
+                    $deleteDetailResult = TRUE;
+                } catch (Exception $e) {
+                    $deleteDetailResult = $e->getMessage();
+                }
 
                 if ($deleteDetailResult !== TRUE) {
                     return $this->respondError('Failed to refresh draft expense details.');
@@ -897,17 +857,8 @@ class Liquidation extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "UserId" => $userId,
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_liquidation_header', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Liquidation_model');
+            $result = $this->Liquidation_model->list_by_user($userId, $cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take);
 
@@ -936,15 +887,8 @@ class Liquidation extends MY_Controller
                 }
             }
 
-            $params = array(
-                "LiquidationId" => $data['LiquidationId'],
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_liquidation_details', count($params)),
-                $params,
-                'result'
-            );
+            $this->load->model('Liquidation_model');
+            $result = $this->Liquidation_model->list_details($data['LiquidationId']);
 
             return $this->respondSuccess("success", $result);
         } catch (Exception $e) {
@@ -954,11 +898,32 @@ class Liquidation extends MY_Controller
 
 
 
+    private function hasApproverApproved($referenceNo)
+    {
+        $row = $this->sp->db->select('D.id')
+            ->from('tbl_approval_header H')
+            ->join('tbl_approval_details D', 'D.approval_header_id = H.id')
+            ->where('H.reference_id', $referenceNo)
+            ->where('H.is_active', 1)
+            ->where('D.is_active', 1)
+            ->where('D.status', 'APPROVED')
+            ->limit(1)
+            ->get()
+            ->row_array();
+
+        return !empty($row);
+    }
+
     public function edit($liquidation_no = '')
     {
         $ref = trim((string) $liquidation_no);
         if ($ref === '') {
             redirect('transactions/liquidation');
+            return;
+        }
+
+        if ($this->hasApproverApproved($ref)) {
+            redirect('transactions/liquidation/view/' . rawurlencode($ref));
             return;
         }
 
@@ -1006,23 +971,13 @@ class Liquidation extends MY_Controller
                 return $this->respondError('Only submitted liquidations can be edited.');
             }
 
-            $detailParams = array(
-                'LiquidationId' => $liquidationId,
-            );
-            $details = $this->sp->readData(
-                build_sp('sp_fetch_liquidation_details', count($detailParams)),
-                $detailParams,
-                'result'
-            );
+            if ($this->hasApproverApproved($liquidationId)) {
+                return $this->respondError('This liquidation can no longer be edited because an approver has already approved it.');
+            }
 
-            $approvalParams = array(
-                'LiquidationId' => $liquidationId,
-            );
-            $approvals = $this->sp->readData(
-                build_sp('sp_fetch_liquidation_approvals', count($approvalParams)),
-                $approvalParams,
-                'result'
-            );
+            $this->load->model('Liquidation_model');
+            $details = $this->Liquidation_model->list_details($liquidationId);
+            $approvals = $this->Liquidation_model->list_approvals($liquidationId);
 
             $approvalMap = array();
             if (is_array($approvals)) {
@@ -1093,6 +1048,10 @@ class Liquidation extends MY_Controller
                 return $this->respondError('Only submitted liquidations can be updated.');
             }
 
+            if ($this->hasApproverApproved($liquidationId)) {
+                return $this->respondError('This liquidation can no longer be edited because an approver has already approved it.');
+            }
+
             if (!isset($data['CashAdvanceId']) || $data['CashAdvanceId'] === '') {
                 return $this->respondError('Missing required field: CashAdvanceId');
             }
@@ -1112,21 +1071,13 @@ class Liquidation extends MY_Controller
             $expenseRangeTo = isset($data['ExpenseRangeTo']) ? trim((string) $data['ExpenseRangeTo']) : '';
             $statusCode = isset($data['StatusCode']) && $data['StatusCode'] !== '' ? trim((string) $data['StatusCode']) : 'LQ_SUBMITTED';
 
-            $updateHeaderParams = array(
-                'LiquidationId' => $liquidationId,
-                'UserId' => $currentUserId,
-                'TotalAmountSpent' => $totalAmountSpent,
-                'RefundAmount' => $refundAmount,
-                'ReimburseAmount' => $reimburseAmount,
-                'StatusCode' => $statusCode,
-                'ExpenseRangeFrom' => $expenseRangeFrom,
-                'ExpenseRangeTo' => $expenseRangeTo,
-            );
-
-            $updateHeaderResult = $this->sp->createData(
-                build_sp('sp_update_liquidation_header_submitted', count($updateHeaderParams)),
-                $updateHeaderParams
-            );
+            $this->load->model('Liquidation_model');
+            try {
+                $this->Liquidation_model->update_submitted_header($liquidationId, $currentUserId, $totalAmountSpent, $refundAmount, $reimburseAmount, $statusCode, $expenseRangeFrom, $expenseRangeTo);
+                $updateHeaderResult = TRUE;
+            } catch (Exception $e) {
+                $updateHeaderResult = $e->getMessage();
+            }
 
             $this->logAuditTrail(
                 'LIQUIDATION',
@@ -1139,14 +1090,7 @@ class Liquidation extends MY_Controller
                 return $this->respondError('Failed to update liquidation header.');
             }
 
-            $approvalParams = array(
-                'LiquidationId' => $liquidationId,
-            );
-            $approvals = $this->sp->readData(
-                build_sp('sp_fetch_liquidation_approvals', count($approvalParams)),
-                $approvalParams,
-                'result'
-            );
+            $approvals = $this->Liquidation_model->list_approvals($liquidationId);
 
             $approvedItemIds = array();
             $itemApprovalStatus = array();
@@ -1176,14 +1120,12 @@ class Liquidation extends MY_Controller
                 }
             }
 
-            $deleteDetailParams = array(
-                'LiquidationId' => $liquidationId,
-                'KeepItemIds' => implode(',', $approvedItemIds),
-            );
-            $deleteDetailResult = $this->sp->createData(
-                build_sp('sp_delete_liquidation_details_except_approved', count($deleteDetailParams)),
-                $deleteDetailParams
-            );
+            try {
+                $this->Liquidation_model->delete_details_except($liquidationId, implode(',', $approvedItemIds));
+                $deleteDetailResult = TRUE;
+            } catch (Exception $e) {
+                $deleteDetailResult = $e->getMessage();
+            }
 
             if ($deleteDetailResult !== TRUE) {
                 return $this->respondError('Failed to refresh expense details.');
@@ -1258,14 +1200,8 @@ class Liquidation extends MY_Controller
                 return $this->respondError('Missing ReferenceNo');
             }
 
-            $auditParams = array(
-                'TransactionId' => $referenceNo,
-            );
-            $auditTrail = $this->sp->readData(
-                build_sp('sp_fetch_audit_trail', count($auditParams)),
-                $auditParams,
-                'result'
-            );
+            $this->load->model('Audit_trail_model');
+            $auditTrail = $this->Audit_trail_model->list_by_transaction($referenceNo);
 
             return $this->respondSuccess('Timeline fetched', array(
                 'audit_trail' => is_array($auditTrail) ? $auditTrail : array(),

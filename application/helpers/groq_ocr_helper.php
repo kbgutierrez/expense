@@ -4,36 +4,34 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 if (!function_exists('groq_ocr_extract')) {
     function groq_ocr_extract($imageDataUrl, $prompt, $apiKey, array $context = array())
     {
-        $candidates = _groq_ocr_candidate_models();
-
-        $cached = _groq_ocr_get_cached_model();
-        if ($cached !== '' && in_array($cached, $candidates, true)) {
-            $candidates = array_values(array_unique(array_merge(array($cached), $candidates)));
-        }
-
         $attempts = array();
+        $candidates = _groq_ocr_resolve_candidates($apiKey, false);
+        $rediscovered = false;
 
-        foreach ($candidates as $model) {
-            $attempt = _groq_ocr_call_api($model, $imageDataUrl, $prompt, $apiKey);
-            $attempts[] = array(
-                'model' => $model,
-                'http_code' => $attempt['http_code'],
-                'curl_error' => $attempt['curl_error'],
-                'provider_error' => $attempt['provider_error'],
-            );
+        while (true) {
+            $run = _groq_ocr_try_models($candidates, $imageDataUrl, $prompt, $apiKey, $attempts);
 
-            if ($attempt['success']) {
-                _groq_ocr_set_cached_model($model);
-                _groq_ocr_log($context, $attempts, $model, true);
+            if ($run['ok']) {
+                _groq_ocr_remember_working_model($run['model']);
+                _groq_ocr_log($context, $attempts, $run['model'], true);
 
                 return array(
                     'ok' => true,
-                    'content' => $attempt['content'],
-                    'model' => $model,
+                    'content' => $run['content'],
+                    'model' => $run['model'],
                 );
             }
 
-            if (!$attempt['retry_next_model']) {
+            if ($run['fatal'] || $rediscovered) {
+                break;
+            }
+
+            $rediscovered = true;
+            $triedModels = array_column($attempts, 'model');
+            $fresh = _groq_ocr_resolve_candidates($apiKey, true);
+            $candidates = array_values(array_diff($fresh, $triedModels));
+
+            if (empty($candidates)) {
                 break;
             }
         }
@@ -47,15 +45,53 @@ if (!function_exists('groq_ocr_extract')) {
     }
 }
 
-if (!function_exists('_groq_ocr_candidate_models')) {
-    function _groq_ocr_candidate_models()
+if (!function_exists('_groq_ocr_try_models')) {
+    function _groq_ocr_try_models(array $candidates, $imageDataUrl, $prompt, $apiKey, array &$attempts)
+    {
+        foreach ($candidates as $model) {
+            $attempt = _groq_ocr_call_api($model, $imageDataUrl, $prompt, $apiKey);
+            $attempts[] = array(
+                'model' => $model,
+                'http_code' => $attempt['http_code'],
+                'curl_error' => $attempt['curl_error'],
+                'provider_error' => $attempt['provider_error'],
+            );
+
+            if ($attempt['success']) {
+                return array('ok' => true, 'fatal' => false, 'model' => $model, 'content' => $attempt['content']);
+            }
+
+            if (!$attempt['retry_next_model']) {
+                return array('ok' => false, 'fatal' => true, 'model' => null, 'content' => '');
+            }
+        }
+
+        return array('ok' => false, 'fatal' => false, 'model' => null, 'content' => '');
+    }
+}
+
+if (!function_exists('_groq_ocr_fallback_models')) {
+    function _groq_ocr_fallback_models()
     {
         return array(
-            'qwen/qwen3.6-27b',
-            'openai/gpt-oss-120b',
+            'qwen/qwen3.8-27b',
             'meta-llama/llama-4-scout-17b-16e-instruct',
             'meta-llama/llama-4-maverick-17b-128e-instruct',
         );
+    }
+}
+
+if (!function_exists('_groq_ocr_preferred_prefixes')) {
+    function _groq_ocr_preferred_prefixes()
+    {
+        return array('qwen/', 'meta-llama/llama-4', 'meta-llama/');
+    }
+}
+
+if (!function_exists('_groq_ocr_cache_ttl')) {
+    function _groq_ocr_cache_ttl()
+    {
+        return 6 * 3600;
     }
 }
 
@@ -66,31 +102,141 @@ if (!function_exists('_groq_ocr_cache_path')) {
     }
 }
 
-if (!function_exists('_groq_ocr_get_cached_model')) {
-    function _groq_ocr_get_cached_model()
+if (!function_exists('_groq_ocr_read_cache')) {
+    function _groq_ocr_read_cache()
     {
         $path = _groq_ocr_cache_path();
         if (!is_file($path)) {
-            return '';
+            return array();
         }
 
         $raw = @file_get_contents($path);
         if ($raw === false || $raw === '') {
-            return '';
+            return array();
         }
 
         $data = json_decode($raw, true);
-        return is_array($data) && !empty($data['model']) ? (string) $data['model'] : '';
+        return is_array($data) ? $data : array();
     }
 }
 
-if (!function_exists('_groq_ocr_set_cached_model')) {
-    function _groq_ocr_set_cached_model($model)
+if (!function_exists('_groq_ocr_write_cache')) {
+    function _groq_ocr_write_cache(array $data)
     {
-        @file_put_contents(_groq_ocr_cache_path(), json_encode(array(
-            'model' => $model,
-            'updated_at' => date('Y-m-d H:i:s'),
-        )));
+        @file_put_contents(_groq_ocr_cache_path(), json_encode($data));
+    }
+}
+
+if (!function_exists('_groq_ocr_remember_working_model')) {
+    function _groq_ocr_remember_working_model($model)
+    {
+        $cache = _groq_ocr_read_cache();
+        $models = isset($cache['models']) && is_array($cache['models']) ? $cache['models'] : array();
+        $models = array_values(array_unique(array_merge(array($model), $models)));
+
+        $cache['model'] = $model;
+        $cache['models'] = $models;
+        $cache['updated_at'] = date('Y-m-d H:i:s');
+        if (empty($cache['discovered_at'])) {
+            $cache['discovered_at'] = time();
+        }
+
+        _groq_ocr_write_cache($cache);
+    }
+}
+
+if (!function_exists('_groq_ocr_resolve_candidates')) {
+    function _groq_ocr_resolve_candidates($apiKey, $forceDiscover)
+    {
+        $cache = _groq_ocr_read_cache();
+        $cachedModels = isset($cache['models']) && is_array($cache['models']) ? $cache['models'] : array();
+        $discoveredAt = isset($cache['discovered_at']) ? (int) $cache['discovered_at'] : 0;
+
+        if (!$forceDiscover && !empty($cachedModels) && (time() - $discoveredAt) < _groq_ocr_cache_ttl()) {
+            return $cachedModels;
+        }
+
+        $discovered = _groq_ocr_discover_models($apiKey);
+
+        if (!empty($discovered)) {
+            $lastWorking = isset($cache['model']) ? (string) $cache['model'] : '';
+            if ($lastWorking !== '' && in_array($lastWorking, $discovered, true)) {
+                $discovered = array_values(array_unique(array_merge(array($lastWorking), $discovered)));
+            }
+
+            _groq_ocr_write_cache(array(
+                'model' => $lastWorking !== '' && in_array($lastWorking, $discovered, true) ? $lastWorking : $discovered[0],
+                'models' => $discovered,
+                'discovered_at' => time(),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ));
+
+            return $discovered;
+        }
+
+        if (!empty($cachedModels)) {
+            return $cachedModels;
+        }
+
+        return _groq_ocr_fallback_models();
+    }
+}
+
+if (!function_exists('_groq_ocr_discover_models')) {
+    function _groq_ocr_discover_models($apiKey)
+    {
+        $ch = curl_init('https://api.groq.com/openai/v1/models');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $apiKey));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+        $raw = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw === false || $httpCode >= 400) {
+            return array();
+        }
+
+        $response = json_decode($raw, true);
+        if (!is_array($response) || !isset($response['data']) || !is_array($response['data'])) {
+            return array();
+        }
+
+        $ids = array();
+        foreach ($response['data'] as $model) {
+            if (!is_array($model) || empty($model['id'])) {
+                continue;
+            }
+            if (isset($model['active']) && $model['active'] === false) {
+                continue;
+            }
+
+            $input = isset($model['input_modalities']) && is_array($model['input_modalities']) ? $model['input_modalities'] : array();
+            $output = isset($model['output_modalities']) && is_array($model['output_modalities']) ? $model['output_modalities'] : array('text');
+            if (!in_array('image', $input, true) || !in_array('text', $output, true)) {
+                continue;
+            }
+
+            $ids[] = (string) $model['id'];
+        }
+
+        $prefixes = _groq_ocr_preferred_prefixes();
+        usort($ids, function ($a, $b) use ($prefixes) {
+            $rank = function ($id) use ($prefixes) {
+                foreach ($prefixes as $index => $prefix) {
+                    if (strpos($id, $prefix) === 0) {
+                        return $index;
+                    }
+                }
+                return count($prefixes);
+            };
+
+            $diff = $rank($a) - $rank($b);
+            return $diff !== 0 ? $diff : strcmp($b, $a);
+        });
+
+        return $ids;
     }
 }
 
@@ -150,12 +296,8 @@ if (!function_exists('_groq_ocr_call_api')) {
 
         if (!is_array($response) || $httpCode >= 400) {
             $providerError = is_array($response) && isset($response['error']) ? $response['error'] : null;
-            $errorCode = is_array($providerError) && isset($providerError['code']) ? strtolower((string) $providerError['code']) : '';
-            $errorMessage = is_array($providerError) && isset($providerError['message']) ? strtolower((string) $providerError['message']) : '';
 
-            $looksLikeModelProblem = strpos($errorCode, 'model') !== false
-                || strpos($errorMessage, 'model') !== false
-                || strpos($errorMessage, 'decommission') !== false;
+            $isAuthProblem = $httpCode === 401 || $httpCode === 403;
 
             return array(
                 'success' => false,
@@ -163,7 +305,7 @@ if (!function_exists('_groq_ocr_call_api')) {
                 'curl_error' => '',
                 'provider_error' => $providerError,
                 'content' => '',
-                'retry_next_model' => $looksLikeModelProblem,
+                'retry_next_model' => !$isAuthProblem,
             );
         }
 

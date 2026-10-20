@@ -78,11 +78,8 @@ class Replenishment extends MY_Controller
 
     private function getActiveFundForUser($userId)
     {
-        $row = $this->sp->readData(
-            build_sp('sp_fetch_user_active_revolving_fund', 1),
-            array('UserId' => $userId),
-            'row'
-        );
+        $this->load->model('Revolving_fund_model');
+        $row = $this->Revolving_fund_model->find_active_fund_for_user($userId);
 
         return !empty($row) ? $row : null;
     }
@@ -97,11 +94,8 @@ class Replenishment extends MY_Controller
                 return $this->respondError('You do not currently hold an active revolving fund.');
             }
 
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_claimable_paid_reimbursements', 1),
-                array('SupervisorUserId' => $userId),
-                'result'
-            );
+            $this->load->model('Reimbursement_model');
+            $result = $this->Reimbursement_model->list_claimable_paid($userId);
 
             return $this->respondSuccess('OK', is_array($result) ? $result : array());
         } catch (Exception $e) {
@@ -185,16 +179,11 @@ class Replenishment extends MY_Controller
             $cursorIdRaw = $this->input->post('CursorId');
             $take = isset($_POST['Take']) ? (int) $_POST['Take'] : 20;
 
-            $params = array(
-                'UserId' => $userId,
-                'CursorId' => ($cursorIdRaw !== null && $cursorIdRaw !== '') ? (int) $cursorIdRaw : null,
-                'Take' => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_replenishment_list', count($params)),
-                $params,
-                'result'
+            $this->load->model('Replenishment_model');
+            $result = $this->Replenishment_model->list_by_user(
+                $userId,
+                ($cursorIdRaw !== null && $cursorIdRaw !== '') ? (int) $cursorIdRaw : null,
+                $take
             );
 
             return $this->respondSuccess('OK', is_array($result) ? $result : array());
@@ -214,17 +203,9 @@ class Replenishment extends MY_Controller
                 return $this->respondError('Missing required field: ReplenishmentId');
             }
 
-            $header = $this->sp->readData(
-                build_sp('sp_fetch_replenishment_detail', 1),
-                array('ReplenishmentId' => $replenishmentId),
-                'row'
-            );
-
-            $details = $this->sp->readData(
-                build_sp('sp_fetch_replenishment_detail', 1),
-                array('ReplenishmentId' => $replenishmentId),
-                'result'
-            );
+            $this->load->model('Replenishment_model');
+            $header = $this->Replenishment_model->find_header($replenishmentId);
+            $details = $this->Replenishment_model->list_details($replenishmentId);
 
             if (!is_array($header) || empty($header)) {
                 return $this->respondError('Replenishment request not found.');
@@ -250,14 +231,8 @@ class Replenishment extends MY_Controller
                 return $this->respondError('Missing ReferenceNo');
             }
 
-            $auditParams = array(
-                'TransactionId' => $referenceNo,
-            );
-            $auditTrail = $this->sp->readData(
-                build_sp('sp_fetch_audit_trail', count($auditParams)),
-                $auditParams,
-                'result'
-            );
+            $this->load->model('Audit_trail_model');
+            $auditTrail = $this->Audit_trail_model->list_by_transaction($referenceNo);
 
             return $this->respondSuccess('Timeline fetched', array(
                 'audit_trail' => is_array($auditTrail) ? $auditTrail : array(),

@@ -5,19 +5,8 @@ if (!function_exists('render_notification_template')) {
     function render_notification_template($eventCode, $transactionType, array $mergeData = array())
     {
         $ci = &get_instance();
-        $ci->load->model('SPModel', 'sp');
-        $ci->sp->setDatabase('dbknet');
-
-        $params = array(
-            'EventCode' => $eventCode,
-            'TransactionType' => $transactionType,
-        );
-
-        $template = $ci->sp->readData(
-            build_sp('sp_fetch_notification_template_for_event', count($params)),
-            $params,
-            'row'
-        );
+        $ci->load->model('Notification_model');
+        $template = $ci->Notification_model->find_template_for_event($eventCode, $transactionType);
 
         if (!is_array($template) || empty($template['subject'])) {
             return null;
@@ -93,20 +82,8 @@ if (!function_exists('send_notification_email')) {
         }
 
         try {
-            $ci->load->model('SPModel', 'sp');
-            $ci->sp->setDatabase('dbknet');
-            $logParams = array(
-                'event_code' => $eventCode,
-                'reference_no' => $referenceNo,
-                'transaction_type' => $transactionType,
-                'recipient_email' => $toEmail,
-                'recipient_name' => $toName,
-                'subject' => $subject,
-                'status' => $status,
-                'error_message' => $errorMessage,
-                'recipient_user_id' => $recipientUserId,
-            );
-            $ci->sp->createData(build_sp('sp_insert_notification_log', count($logParams)), $logParams);
+            $ci->load->model('Notification_model');
+            $ci->Notification_model->create_log($eventCode, $referenceNo, $transactionType, $toEmail, $toName, $subject, $status, $errorMessage, $recipientUserId);
         } catch (\Throwable $e) {
             log_message('error', 'Failed to write notification log: ' . $e->getMessage());
         }

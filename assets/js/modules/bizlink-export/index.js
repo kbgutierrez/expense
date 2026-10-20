@@ -10,6 +10,8 @@ let bizlinkExportLoaded = false;
 let selectedTransactionType = 'ALL';
 let bizlinkExportDesktopPage = 1;
 let bizlinkExportDateRangePicker = null;
+let bizlinkSortKey = '';
+let bizlinkSortDir = 'asc';
 const paymentSelectedRefs = new Set();
 
 const formatPHP = (amount) => {
@@ -72,7 +74,7 @@ const normalizeBizlinkExportRows = (rows) =>
 			userId: Number(row.user_id || 0),
 			requestor: normalizeDate(row.requester_name),
 			department: normalizeDate(row.department),
-			amount: Number(row.ca_amount ?? row.lq_amount ?? 0),
+			amount: Number(row.approved_amount ?? row.ca_amount ?? row.lq_amount ?? 0),
 			submittedDate,
 			decisionStatus: normalizeDate(row.decision_status).toUpperCase(),
 			decidedDate,
@@ -159,6 +161,39 @@ const getFilteredBizlinkExportRows = () => bizlinkExportRows
 	.filter(matchesDateRange)
 	.filter(matchesKeyword);
 
+const getBizlinkSortValue = (row, key) => {
+	if (key === 'transactionType') {
+		return getTransactionTypeLabel(row.transactionType);
+	}
+	const value = row[key];
+	return value === undefined ? null : value;
+};
+
+const sortBizlinkExportRows = (rows) => {
+	if (!bizlinkSortKey) {
+		return rows;
+	}
+	const direction = bizlinkSortDir === 'desc' ? -1 : 1;
+	return rows.slice().sort((a, b) => {
+		const left = getBizlinkSortValue(a, bizlinkSortKey);
+		const right = getBizlinkSortValue(b, bizlinkSortKey);
+		if ((left === null || left === '') && (right === null || right === '')) return 0;
+		if (left === null || left === '') return 1;
+		if (right === null || right === '') return -1;
+		if (typeof left === 'number' && typeof right === 'number') return (left - right) * direction;
+		return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: 'base' }) * direction;
+	});
+};
+
+const updateBizlinkSortIndicators = () => {
+	document.querySelectorAll('.kna-table-main thead th[data-sort-key]').forEach((th) => {
+		const active = th.getAttribute('data-sort-key') === bizlinkSortKey;
+		th.classList.toggle('is-sorted-asc', active && bizlinkSortDir === 'asc');
+		th.classList.toggle('is-sorted-desc', active && bizlinkSortDir === 'desc');
+		th.setAttribute('aria-sort', active ? (bizlinkSortDir === 'asc' ? 'ascending' : 'descending') : 'none');
+	});
+};
+
 const renderDesktopPagination = (rows) => {
 	const desktopPagination = document.getElementById('desktopPagination');
 	if (!desktopPagination) {
@@ -209,7 +244,7 @@ const renderDesktopPagination = (rows) => {
 };
 
 const goToDesktopPage = (targetPage) => {
-	const rows = getFilteredBizlinkExportRows();
+	const rows = sortBizlinkExportRows(getFilteredBizlinkExportRows());
 	const totalPages = Math.max(1, Math.ceil(rows.length / BIZLINK_EXPORT_PAGE_SIZE));
 	if (targetPage < 1 || targetPage > totalPages) {
 		return;
@@ -306,7 +341,7 @@ const refreshBizlinkExportList = () => {
 		return;
 	}
 
-	const rows = getFilteredBizlinkExportRows();
+	const rows = sortBizlinkExportRows(getFilteredBizlinkExportRows());
 	const totalPages = Math.max(1, Math.ceil(rows.length / BIZLINK_EXPORT_PAGE_SIZE));
 	if (bizlinkExportDesktopPage > totalPages) {
 		bizlinkExportDesktopPage = totalPages;
@@ -544,6 +579,26 @@ const initBizlinkExportPage = () => {
 	if (!listPage) {
 		return;
 	}
+
+	document.querySelectorAll('.kna-table-main thead th[data-sort-key]').forEach((th) => {
+		th.addEventListener('click', () => {
+			const key = th.getAttribute('data-sort-key');
+			if (bizlinkSortKey === key) {
+				if (bizlinkSortDir === 'asc') {
+					bizlinkSortDir = 'desc';
+				} else {
+					bizlinkSortKey = '';
+					bizlinkSortDir = 'asc';
+				}
+			} else {
+				bizlinkSortKey = key;
+				bizlinkSortDir = 'asc';
+			}
+			bizlinkExportDesktopPage = 1;
+			updateBizlinkSortIndicators();
+			refreshBizlinkExportList();
+		});
+	});
 
 	const filterTransactionType = document.getElementById('filterTransactionType');
 	if (filterTransactionType) {

@@ -47,18 +47,13 @@ class Revolving_Fund_Ledger_Report extends MY_Controller
     {
         $filters = $this->resolveFilters();
 
-        $params = array(
-            'FundCode' => $filters['FundCode'],
-            'DateFrom' => $filters['DateFrom'],
-            'DateTo' => $filters['DateTo'],
-            'CursorId' => $cursorId,
-            'Take' => $take,
-        );
-
-        $result = $this->sp->readData(
-            build_sp('sp_fetch_revolving_fund_ledger', count($params)),
-            $params,
-            'result'
+        $this->load->model('Revolving_fund_model');
+        $result = $this->Revolving_fund_model->get_ledger_report(
+            $filters['FundCode'],
+            $filters['DateFrom'],
+            $filters['DateTo'],
+            $cursorId,
+            $take
         );
 
         return is_array($result) ? $result : array();

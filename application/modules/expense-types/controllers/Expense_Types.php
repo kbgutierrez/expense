@@ -10,6 +10,7 @@ class Expense_Types extends MY_Controller
         parent::__construct();
         $this->load->model('SPModel', 'sp');
         $this->sp->setDatabase('dbknet');
+        $this->load->model('Expense_type_model');
     }
 
     public function index()
@@ -39,16 +40,7 @@ class Expense_Types extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_maintenance_expense_types', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Expense_type_model->list_paged($cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take);
 
@@ -163,21 +155,21 @@ class Expense_Types extends MY_Controller
                 $status = 'CAT_ACTIVE';
             }
 
-            $params = array(
-                'Id'           => $id,
-                'ExpenseCode'  => $expenseCode,
-                'CategoryName' => $categoryName,
-                'LongText'     => $longText,
-                'ShortText'    => $shortText,
-                'Category'     => $category,
-                'Status'       => $status,
-                'UpdatedBy'    => (int) $this->session->userdata('user_id'),
-            );
-
-            $result = $this->sp->createData(
-                build_sp('sp_update_maintenance_expense_type', count($params)),
-                $params
-            );
+            try {
+                $this->Expense_type_model->update(
+                    $id,
+                    $expenseCode,
+                    $categoryName,
+                    $longText,
+                    $shortText,
+                    $category,
+                    $status,
+                    (int) $this->session->userdata('user_id')
+                );
+                $result = true;
+            } catch (Exception $e) {
+                $result = $e->getMessage();
+            }
 
             if ($result === true) {
                 return $this->respondSuccess('Expense type updated successfully');

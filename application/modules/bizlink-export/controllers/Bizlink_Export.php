@@ -10,6 +10,8 @@ class Bizlink_Export extends MY_Controller
         parent::__construct();
         $this->load->model('SPModel', 'sp');
         $this->sp->setDatabase('dbknet');
+        $this->load->model('Approval_model');
+        $this->load->model('Bizlink_model');
     }
 
     public function index()
@@ -37,17 +39,7 @@ class Bizlink_Export extends MY_Controller
                 $cursorId = (int) $cursorIdRaw;
             }
 
-            $params = array(
-                "UserId" => $userId,
-                "CursorId" => $cursorId,
-                "Take" => $take,
-            );
-
-            $result = $this->sp->readData(
-                build_sp('sp_fetch_past_approvals_header', count($params)),
-                $params,
-                'result'
-            );
+            $result = $this->Approval_model->list_past_headers($userId, $cursorId, $take);
 
             $payload = $this->buildPaginationResult($result, $take, 'approval_detail_id');
 
@@ -147,6 +139,9 @@ class Bizlink_Export extends MY_Controller
 
     private function bizlinkPad($value, $length)
     {
+        if (is_float($value)) {
+            $value = sprintf('%.0f', $value);
+        }
         return str_pad((string) $value, $length, '0', STR_PAD_LEFT);
     }
 
@@ -179,7 +174,7 @@ class Bizlink_Export extends MY_Controller
 
     private function bizlinkAmountToCents($amount)
     {
-        return (int) round(((float) $amount) * 100);
+        return round(((float) $amount) * 100);
     }
 
     private function bizlinkExportError($message)
@@ -257,7 +252,7 @@ class Bizlink_Export extends MY_Controller
             return;
         }
 
-        $company = $this->sp->readData('EXEC sp_fetch_bizlink_company_settings', array(), 'row');
+        $company = $this->Bizlink_model->get_company_settings();
         if (!is_array($company) || empty($company['id']) || empty($company['company_account_number'])) {
             $this->bizlinkExportError('Company / BizLink Settings must be configured before generating the text file.');
             return;
@@ -266,11 +261,7 @@ class Bizlink_Export extends MY_Controller
         $lines = array();
         $missingAccount = array();
         foreach ($eligible as $referenceNo) {
-            $line = $this->sp->readData(
-                build_sp('sp_fetch_bizlink_batch_line', 1),
-                array('ReferenceNo' => $referenceNo),
-                'row'
-            );
+            $line = $this->Bizlink_model->get_batch_line($referenceNo);
 
             if (!is_array($line) || empty($line['account_number'])) {
                 $missingAccount[] = $referenceNo;
@@ -322,7 +313,7 @@ class Bizlink_Export extends MY_Controller
 
                 $totalDebitCents += $amountCents;
                 $ceilingAmountCents = max($ceilingAmountCents, $amountCents);
-                $accountHashTotal += (int) $employeeAccountNumber;
+                $accountHashTotal += (float) $employeeAccountNumber;
                 $grandHorizontalHashTotal += $horizontalHash;
             }
 
@@ -357,28 +348,20 @@ class Bizlink_Export extends MY_Controller
         }
 
         try {
-            $batch = $this->sp->readData(
-                build_sp('sp_create_bizlink_export_batch', 6),
-                array(
-                    'CompanyCode' => $companyCode,
-                    'PayrollDate' => $payrollDate->format('Y-m-d'),
-                    'BatchNumber' => $batchNumberStr,
-                    'RecordCount' => count($detailRecords),
-                    'TotalDebitAmount' => $totalDebitCents / 100,
-                    'UserId' => $userId,
-                ),
-                'row'
+            $batchId = $this->Bizlink_model->create_export_batch(
+                $companyCode,
+                $payrollDate->format('Y-m-d'),
+                $batchNumberStr,
+                count($detailRecords),
+                $totalDebitCents / 100,
+                $userId
             );
-            if (!is_array($batch) || empty($batch['id'])) {
+            if (empty($batchId)) {
                 throw new Exception('Failed to record the generated batch.');
             }
 
             foreach ($eligible as $referenceNo) {
-                $this->sp->readData(
-                    build_sp('sp_add_bizlink_export_batch_line', 2),
-                    array('BatchId' => (int) $batch['id'], 'ReferenceNo' => $referenceNo),
-                    'row'
-                );
+                $this->Bizlink_model->add_export_batch_line((int) $batchId, $referenceNo);
             }
         } catch (Throwable $e) {
             $this->bizlinkExportError($e->getMessage());
@@ -411,11 +394,7 @@ class Bizlink_Export extends MY_Controller
 
             $userId = (int) $this->session->userdata('user_id');
 
-            $rows = $this->sp->readData(
-                build_sp('sp_fetch_bizlink_export_batches', 1),
-                array('Take' => 50),
-                'result'
-            );
+            $rows = $this->Bizlink_model->list_export_batches(50);
             $rows = is_array($rows) ? $rows : array();
 
             foreach ($rows as &$row) {
@@ -450,13 +429,9 @@ class Bizlink_Export extends MY_Controller
                 throw new Exception('A reason is required to void a batch.');
             }
 
-            $result = $this->sp->readData(
-                build_sp('sp_void_bizlink_export_batch', 3),
-                array('BatchId' => $batchId, 'UserId' => $userId, 'Reason' => $reason),
-                'row'
-            );
+            $voidedId = $this->Bizlink_model->void_export_batch($batchId, $userId, $reason);
 
-            if (!is_array($result) || empty($result['id'])) {
+            if (empty($voidedId)) {
                 throw new Exception('Failed to void the batch.');
             }
 
