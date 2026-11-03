@@ -58,7 +58,7 @@ class Liquidation_model extends MY_Model
                 V.id, V.liquidation_id, V.cash_advance_id, V.ca_amount, V.description, V.total_amount_spent,
                 V.refund_amount, V.reimburse_amount, V.approved_amount, V.submitted_date, V.created_date,
                 V.created_by_id, V.created_by, V.updated_date, V.updated_by, V.status_code, V.status_name,
-                V.payable_to, V.address, V.cost_center_id, V.cost_center_name
+                V.payable_to, V.address, V.cost_center_id, V.cost_center_name, V.ca_date
             FROM ' . Knet_views::sub('vw_lq_header', 'V') . '
             WHERE V.liquidation_id = CAST(? AS VARCHAR(50))',
             array($liquidationId)
@@ -192,7 +192,7 @@ class Liquidation_model extends MY_Model
                 updated_by = @UserId,
                 updated_date = GETDATE()
             WHERE liquidation_id = @LiquidationId
-                AND status = 'LQ_SUBMITTED'",
+                AND status IN ('LQ_SUBMITTED', 'LQ_REJECTED')",
             '@LiquidationId VARCHAR(20), @UserId INT, @TotalAmountSpent DECIMAL(18, 2), @RefundAmount DECIMAL(18, 2),
             @ReimburseAmount DECIMAL(18, 2), @StatusCode VARCHAR(20), @ExpenseRangeFrom DATE, @ExpenseRangeTo DATE',
             array($liquidationId, $userId, $totalAmountSpent, $refundAmount, $reimburseAmount, $statusCode, $expenseRangeFrom, $expenseRangeTo)

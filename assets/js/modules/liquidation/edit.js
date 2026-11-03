@@ -91,7 +91,7 @@ const renderEditAttachment = (name, item, isRemoved = false) => {
   }
   const fileRemove = !isRemoved ? `<i class="fas fa-times kna-file-remove" data-edit-action="removeAttachment" data-edit-id="${item._editId}" data-filename="${escapeHtml(name)}" title="Remove attachment"></i>` : '';
   return `<span class="kna-file-wrap ${isRemoved ? 'removed' : ''}" data-filename="${escapeHtml(name)}" data-edit-id="${item._editId}">
-    <i class="fas fa-file-alt" style="color:#6366f1;font-size:11px;"></i>
+    <i class="fas fa-file-alt" style="color:#5b2bd6;font-size:11px;"></i>
     <a href="${url}" target="_blank" rel="noopener" title="${escapeHtml(name)}">${escapeHtml(name)}</a>${fileRemove}${undoLink}
   </span>`;
 };
@@ -237,10 +237,194 @@ const buildItemRow = (item, summary, index) => {
     </div>`;
 };
 
+const mobileEditQuery = window.matchMedia ? window.matchMedia('(max-width: 767.98px)') : null;
+const isMobileEdit = () => Boolean(mobileEditQuery && mobileEditQuery.matches);
+let editSheetId = null;
+
+const isBlankEditItem = (item) => Boolean(item && item.isNew) && !normalizeDate(item.document_date) && !normalizeDate(item.expense_category)
+  && !normalizeDate(item.invoice_receipt_no) && Number(item.actual_amount || 0) <= 0 && !normalizeDate(item.description)
+  && !normalizeDate(item.vendor_name) && !normalizeDate(item.vendor_address) && !normalizeDate(item.vendor_tin) && !(item.newAttachments || []).length;
+
+const formatEditShortDate = (value) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(normalizeDate(value));
+  if (!m) return '';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}`;
+};
+
+const getEditStatusChip = (item, summary) => {
+  if (summary.approval.status === 'approved') return '<span class="lqm-chip is-approved"><i class="fas fa-lock"></i> Approved</span>';
+  if (summary.approval.status === 'partial') return '<span class="lqm-chip is-partial"><i class="fas fa-lock"></i> Partially approved</span>';
+  if (summary.isRejected) return '<span class="lqm-chip is-rejected"><i class="fas fa-times-circle"></i> Rejected</span>';
+  if (item.isNew) return '<span class="lqm-chip is-new">New</span>';
+  return '';
+};
+
+const renderMobileEditCard = (item, summary) => {
+  const et = getEditExpenseTypeByCode(summary.category);
+  const name = normalizeDate((et && (et.longText || et.description || et.expenseCode)) || '') || normalizeDate(item.description) || 'Expense';
+  const sub = [formatEditShortDate(item.document_date), normalizeDate(item.invoice_receipt_no) ? `OR ${normalizeDate(item.invoice_receipt_no)}` : ''].filter(Boolean).join(' · ') || 'Tap to complete details';
+  const hasReceipt = summary.newAttachments.length > 0 || summary.existingAttachments.some((n) => !summary.removedAttachments.includes(n));
+  const amount = summary.amount > 0 ? formatPHP(summary.amount) : '—';
+  const cls = ['lqm-exp', summary.isRejected ? 'is-rejected' : '', summary.isLocked ? 'is-locked' : ''].filter(Boolean).join(' ');
+  const icon = summary.isLocked ? 'fa-lock' : (hasReceipt ? 'fa-receipt' : 'fa-exclamation');
+  const flag = summary.isOcrLoading
+    ? '<span class="lqm-exp-flag is-ocr d-block"><i class="fas fa-spinner fa-spin"></i> Reading receipt</span>'
+    : (!hasReceipt && !summary.isLocked ? '<span class="lqm-exp-flag d-block">Attach receipt</span>' : '');
+  return `
+    <button type="button" class="${cls}" data-edit-action="mOpen" data-edit-id="${item._editId}">
+      <span class="lqm-exp-thumb${!hasReceipt && !summary.isLocked ? ' is-missing' : ''}"><i class="fas ${icon}"></i></span>
+      <span class="lqm-exp-main">
+        <span class="lqm-exp-name d-block">${escapeHtml(name)}</span>
+        <span class="lqm-exp-sub d-block">${escapeHtml(sub)}</span>
+        ${getEditStatusChip(item, summary)}
+      </span>
+      <span class="lqm-exp-right">
+        <span class="lqm-exp-amt d-block">${escapeHtml(amount)}</span>
+        ${flag}
+      </span>
+    </button>`;
+};
+
+const renderMobileEditSheet = (item, summary) => {
+  const locked = summary.isLocked;
+  const dis = locked ? 'disabled' : '';
+  const att = buildAttachmentCell(item, summary);
+  const hasAnyAttachment = summary.newAttachments.length > 0 || summary.existingAttachments.length > 0;
+  let receipt;
+  if (hasAnyAttachment) {
+    receipt = `<div class="lqm-receipt-has${locked ? ' lqm-locked' : ''}"><span class="kna-attachment-cell">${att.attachHtml}${att.ocrLoadingIcon}${att.compressedIcon}</span>${!locked ? `<button type="button" data-edit-action="attach" data-edit-id="${item._editId}">Replace</button>` : ''}</div>`;
+  } else if (!locked) {
+    receipt = `<button type="button" class="lqm-receipt" data-edit-action="attach" data-edit-id="${item._editId}"><i class="fas fa-camera"></i>Add receipt photo<small>We'll fill in the details for you</small></button>`;
+  } else {
+    receipt = '<div class="lqm-receipt-has"><span class="text-muted" style="font-size:12px;">No receipt attached</span></div>';
+  }
+  const rejectNote = summary.isRejected && summary.approval.rejections.length
+    ? `<div class="lqm-reject-note"><b><i class="fas fa-exclamation-circle"></i> Rejected — please fix and resubmit</b>${summary.approval.rejections.map((rej) => `<div><strong>${escapeHtml(normalizeDate(rej.approver_name || rej.approver || 'Approver'))}:</strong> ${escapeHtml(normalizeDate(rej.remarks || rej.rejection_reason || 'No reason provided'))}</div>`).join('')}</div>`
+    : '';
+  const lockedNote = locked ? '<div class="lqm-locked-note"><i class="fas fa-lock"></i> Approved — this expense can no longer be edited.</div>' : '';
+  const vendorName = normalizeDate(item.vendor_name);
+  const vendorSummary = vendorName || (summary.isVattable ? 'VAT' : 'Optional');
+  const amountValue = Number(item.actual_amount || 0) > 0 ? normalizeDate(item.actual_amount) : '';
+  const isNewBlank = isBlankEditItem(item);
+  return `
+    <div class="lqm-sheet-backdrop" data-edit-action="mClose" data-edit-id="${item._editId}"></div>
+    <div class="lqm-sheet" role="dialog" aria-modal="true" aria-label="Expense">
+      <div class="lqm-grab"></div>
+      <div class="lqm-sheet-head">
+        <b>${isNewBlank ? 'New expense' : 'Expense'}</b>
+        <button type="button" class="lqm-icon-btn" data-edit-action="mClose" data-edit-id="${item._editId}" aria-label="Close"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="lqm-sheet-body">
+        ${lockedNote}${rejectNote}
+        ${receipt}
+        <input type="file" class="d-none" data-edit-file="upload" data-edit-id="${item._editId}" accept="image/*,application/pdf">
+        <input type="file" class="d-none" data-edit-file="camera" data-edit-id="${item._editId}" accept="image/*" capture="environment">
+        ${buildEditOcrStatusHtml(item._editId)}
+        <div class="lqm-amount-wrap">
+          <span class="lqm-label">Amount <span class="lqm-req">*</span></span>
+          <div class="lqm-amount"><span>₱</span><input type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-edit-field="amount" data-edit-id="${item._editId}" value="${escapeHtml(amountValue)}" ${dis}></div>
+        </div>
+        <div class="lqm-two">
+          <div class="lqm-field"><span class="lqm-label">Date <span class="lqm-req">*</span></span><input type="date" class="lqm-input" data-edit-field="documentDate" data-edit-id="${item._editId}" value="${escapeHtml(summary.docDate)}" ${dis}></div>
+          <div class="lqm-field"><span class="lqm-label">OR / Invoice no. <span class="lqm-req">*</span></span><input type="text" class="lqm-input" data-edit-field="reference" data-edit-id="${item._editId}" value="${escapeHtml(normalizeDate(item.invoice_receipt_no))}" placeholder="e.g. 004512" ${dis}></div>
+        </div>
+        <div class="lqm-field"><span class="lqm-label">Expense type <span class="lqm-req">*</span></span><select class="lqm-input" data-edit-field="expenseCategory" data-edit-id="${item._editId}" ${dis}>${editExpenseTypeOptionsMarkup(summary.category)}</select></div>
+        <div class="lqm-field"><span class="lqm-label">Description <span class="lqm-req">*</span></span><input type="text" class="lqm-input" data-edit-field="description" data-edit-id="${item._editId}" value="${escapeHtml(normalizeDate(item.description))}" placeholder="What was this for?" ${dis}></div>
+        <details class="lqm-more">
+          <summary>Vendor &amp; VAT <span>${escapeHtml(vendorSummary)} <i class="fas fa-chevron-down"></i></span></summary>
+          <div class="lqm-field"><span class="lqm-label">Vendor name</span><input type="text" class="lqm-input" data-edit-field="vendorName" data-edit-id="${item._editId}" value="${escapeHtml(vendorName)}" ${dis}></div>
+          <div class="lqm-field"><span class="lqm-label">Vendor address</span><input type="text" class="lqm-input" data-edit-field="vendorAddress" data-edit-id="${item._editId}" value="${escapeHtml(normalizeDate(item.vendor_address))}" ${dis}></div>
+          <div class="lqm-field"><span class="lqm-label">TIN</span><input type="text" class="lqm-input" data-edit-field="vendorTin" data-edit-id="${item._editId}" value="${escapeHtml(normalizeDate(item.vendor_tin))}" ${dis}></div>
+          <label class="lqm-vat">VAT-able receipt <input type="checkbox" data-edit-field="isVattable" data-edit-id="${item._editId}" ${summary.isVattable ? 'checked' : ''} ${dis}></label>
+        </details>
+      </div>
+      <div class="lqm-sheet-foot">
+        ${!locked ? `<button type="button" class="lqm-icon-btn" data-edit-action="mDelete" data-edit-id="${item._editId}" aria-label="Delete expense"><i class="fas fa-trash"></i></button>` : ''}
+        <button type="button" class="lqm-btn lqm-btn-primary" data-edit-action="mDone" data-edit-id="${item._editId}">${locked ? 'Close' : 'Save expense'}</button>
+      </div>
+    </div>`;
+};
+
+const buildMobileEditHtml = () => {
+  const listed = editExpenseItems.filter((item) => !isBlankEditItem(item));
+  const cards = listed.map((item) => renderMobileEditCard(item, getEditExpenseItemSummary(item))).join('');
+  const count = listed.length;
+  const sheetItem = editSheetId ? findEditItem(editSheetId) : null;
+  if (!sheetItem) editSheetId = null;
+  document.documentElement.classList.toggle('lqm-sheet-open', Boolean(sheetItem));
+  const body = count
+    ? cards
+    : '<div class="lqm-empty"><div class="lqm-empty-icon"><i class="fas fa-receipt"></i></div><b>No expenses yet</b><p>Add an expense by scanning its receipt.</p></div>';
+  return `
+    <div class="lqm-list">
+      <div class="lqm-section"><b>Expenses</b><span>${count} item${count === 1 ? '' : 's'}</span></div>
+      ${body}
+      <div class="lqm-actions" style="margin-top:10px;">
+        <button type="button" class="lqm-btn lqm-btn-outline" data-edit-action="mScan" data-edit-id="-1"><i class="fas fa-camera"></i> Scan receipt</button>
+        <button type="button" class="lqm-btn lqm-btn-outline" data-edit-action="mManual" data-edit-id="-1"><i class="fas fa-plus"></i> Add manually</button>
+      </div>
+    </div>
+    <div class="lqm-sheet-wrap">${sheetItem ? renderMobileEditSheet(sheetItem, getEditExpenseItemSummary(sheetItem)) : ''}</div>`;
+};
+
+const openEditSheet = (editId) => {
+  editSheetId = editId;
+  renderEditExpenseItems();
+};
+
+const closeEditSheet = () => {
+  const item = editSheetId ? findEditItem(editSheetId) : null;
+  if (item && isBlankEditItem(item)) {
+    if (editReceiptOcr) editReceiptOcr.cancelOcr(item._editId);
+    editExpenseItems = editExpenseItems.filter((i) => i._editId !== item._editId);
+  }
+  editSheetId = null;
+  renderEditExpenseItems();
+};
+
+const startMobileEditExpense = (scan) => {
+  const blank = editExpenseItems.find((item) => isBlankEditItem(item));
+  const item = blank || createNewEditItem();
+  if (!blank) editExpenseItems.push(item);
+  openEditSheet(item._editId);
+  if (scan) promptEditAttachmentSource(item._editId);
+};
+
+const updateMobileEditProgress = () => {
+  const approved = safeNum(normalizeDate(domEdit.editApprovedAmount?.textContent).replace(/[^0-9.]/g, ''));
+  const total = editExpenseItems.reduce((sum, e) => sum + Number(e.actual_amount || e.amount || 0), 0);
+  if (domEdit.mobileStickyTotal) domEdit.mobileStickyTotal.textContent = formatPHP(total);
+  if (domEdit.mobileTotal) domEdit.mobileTotal.textContent = formatPHP(total);
+  if (domEdit.mobileProgressBar) {
+    domEdit.mobileProgressBar.style.width = `${approved > 0 ? Math.min(100, (total / approved) * 100) : 0}%`;
+    domEdit.mobileProgressBar.classList.toggle('is-over', approved > 0 && total > approved);
+  }
+  if (domEdit.mobileLeft) {
+    if (approved <= 0) domEdit.mobileLeft.textContent = '';
+    else if (total <= approved) domEdit.mobileLeft.textContent = `${formatPHP(approved - total)} left`;
+    else domEdit.mobileLeft.textContent = `${formatPHP(total - approved)} over`;
+  }
+  if (domEdit.mobileVariance) {
+    const refund = approved > total ? approved - total : 0, reimburse = total > approved ? total - approved : 0;
+    domEdit.mobileVariance.textContent = refund > 0 ? `${formatPHP(refund)} to return` : (reimburse > 0 ? `${formatPHP(reimburse)} to reimburse` : 'Fully liquidated');
+    domEdit.mobileVariance.className = 'lqm-variance' + (total <= 0 || approved <= 0 ? ' d-none' : (refund > 0 ? ' is-return' : (reimburse > 0 ? ' is-reimburse' : ' is-balanced')));
+  }
+};
+
 // ─── Render Items ───
 const renderEditExpenseItems = () => {
   const container = domEdit.editExpenseItems;
   if (!container) return;
+
+  if (!editExpenseItems?.length && isMobileEdit()) {
+    container.innerHTML = buildMobileEditHtml();
+    if (domEdit.editLiquidatedAmount) domEdit.editLiquidatedAmount.textContent = formatPHP(0);
+    if (domEdit.editExpenseDate) domEdit.editExpenseDate.textContent = '-';
+    if (domEdit.mobileExpenseDate) domEdit.mobileExpenseDate.textContent = '-';
+    updateEditVariance();
+    return;
+  }
 
   if (!editExpenseItems?.length) {
     container.innerHTML = '<div class="text-muted kna-small py-2">No expense items found.</div>';
@@ -253,17 +437,20 @@ const renderEditExpenseItems = () => {
   }
 
   let rejectedCount = 0;
-  const rowsHtml = editExpenseItems.map((item, i) => {
+  const mobile = isMobileEdit();
+  if (!mobile) document.documentElement.classList.remove('lqm-sheet-open');
+  const rowsHtml = mobile ? '' : editExpenseItems.map((item, i) => {
     const summary = getEditExpenseItemSummary(item);
     if (summary.isRejected) rejectedCount++;
     return buildItemRow(item, summary, i);
   }).join('');
+  if (mobile) rejectedCount = editExpenseItems.filter((item) => getEditExpenseItemSummary(item).isRejected).length;
 
   const total = editExpenseItems.reduce((sum, e) => sum + Number(e.actual_amount || e.amount || 0), 0);
   const totalNet = editExpenseItems.reduce((sum, e) => sum + Number(e.net_amount || 0), 0);
   const totalVat = editExpenseItems.reduce((sum, e) => sum + Number(e.vat_amount || 0), 0);
 
-  container.innerHTML = `
+  container.innerHTML = mobile ? buildMobileEditHtml() : `
     <div class="kna-item-rows">${rowsHtml}</div>
     <div class="kna-mobile-summary">
       <div class="kna-fin-label">Total</div>
@@ -296,6 +483,7 @@ const updateEditVariance = () => {
   const variance = getVariancePresentation(approvedAmount > total ? approvedAmount - total : 0, total > approvedAmount ? total - approvedAmount : 0);
   domEdit.editVariance.innerHTML = variance.desktopHtml;
   if (domEdit.mobileVariance) domEdit.mobileVariance.textContent = variance.mobileText;
+  updateMobileEditProgress();
 };
 
 // ─── Item Factory & Finder ───
@@ -349,8 +537,8 @@ const loadEditData = () => {
       Swal.fire({ icon: 'error', title: 'Access Denied', text: 'You can only edit your own liquidations.' }).then(() => goToPath('transactions/liquidation'));
       return;
     }
-    if (statusCode !== 'LQ_SUBMITTED') {
-      Swal.fire({ icon: 'warning', title: 'Cannot Edit', text: 'Only submitted liquidations can be edited.' }).then(() => goToPath('transactions/liquidation'));
+    if (statusCode !== 'LQ_SUBMITTED' && statusCode !== 'LQ_REJECTED') {
+      Swal.fire({ icon: 'warning', title: 'Cannot Edit', text: 'Only submitted or rejected liquidations can be edited.' }).then(() => goToPath('transactions/liquidation'));
       return;
     }
 
@@ -372,8 +560,9 @@ const loadEditData = () => {
     setText(domEdit.mobileCaAmount, formatPHP(Number(record.ca_amount || 0)));
     setText(domEdit.editApprovedAmount, formatPHP(Number(record.approved_amount || 0)));
     setText(domEdit.mobileApprovedAmount, formatPHP(Number(record.approved_amount || 0)));
-    setText(domEdit.editCaDate, submittedDate);
-    setText(domEdit.mobileCaDate, submittedDate);
+    const caDate = normalizeDate(record.ca_date || '').slice(0, 10) || '-';
+    setText(domEdit.editCaDate, caDate);
+    setText(domEdit.mobileCaDate, caDate);
     setHtml(domEdit.editStatus, getStatusBadge(normalizeDate(record.status_name)));
     setText(domEdit.mobileStatus, normalizeDate(record.status_name) || '-');
     setText(domEdit.editSubmittedDate, submittedDate);
@@ -391,6 +580,7 @@ const loadEditData = () => {
     const variance = getVariancePresentation(Number(record.refund_amount || 0), Number(record.reimburse_amount || 0));
     setHtml(domEdit.editVariance, variance.desktopHtml);
     setText(domEdit.mobileVariance, variance.mobileText);
+    if (editExpenseItems.length) updateEditVariance(); else updateMobileEditProgress();
   }).fail(() => {
     Swal.fire({ icon: 'error', title: 'Load Failed', text: 'Could not load liquidation header.' }).then(() => goToPath('transactions/liquidation'));
   });
@@ -448,13 +638,15 @@ const getEditFormPayload = () => {
 // ─── Validation ───
 const validateEditBeforeSave = () => {
   const editableItems = editExpenseItems.filter((item) => getItemApprovalStatus(item).canEdit);
-  if (!editableItems.length) {
+  const isRejected = normalizeDate(editLiquidationData?.status_code || '') === 'LQ_REJECTED';
+  if (!editableItems.length && !isRejected) {
     Swal.fire({ icon: 'warning', title: 'Nothing to edit', text: 'All items are approved and locked. No changes can be made.' });
     return null;
   }
   const missing = editableItems.find((item) => !item.document_date || !item.expense_category || !item.invoice_receipt_no || Number(item.actual_amount || 0) <= 0 || !item.description);
   if (missing) {
-    Swal.fire({ icon: 'warning', title: 'Incomplete item', text: 'Each editable item requires document date, expense type, reference, amount, and remarks.' });
+    Swal.fire({ icon: 'warning', title: 'Incomplete item', text: 'Each editable item requires document date, expense type, reference, amount, and remarks.' })
+      .then(() => { if (isMobileEdit() && missing._editId) openEditSheet(missing._editId); });
     return null;
   }
   const state = getEditFormPayload();
@@ -467,6 +659,11 @@ const validateEditBeforeSave = () => {
 
 // ─── Save / Submit ───
 const sendEditUpdate = (statusCode) => {
+  if (isMobileEdit() && editExpenseItems.some(isBlankEditItem)) {
+    editExpenseItems = editExpenseItems.filter((item) => !isBlankEditItem(item));
+    editSheetId = null;
+    renderEditExpenseItems();
+  }
   const state = validateEditBeforeSave();
   if (!state) return;
 
@@ -518,7 +715,7 @@ const sendEditUpdate = (statusCode) => {
       .then((result) => { if (result.isConfirmed) doSave(); });
     return;
   }
-  Swal.fire({ icon: 'question', title: 'Resubmit for Approval?', text: 'Are you sure you want to resubmit this liquidation for approval?', showCancelButton: true, confirmButtonText: 'Yes', cancelButtonText: 'Cancel', reverseButtons: true, confirmButtonColor: '#6366f1' })
+  Swal.fire({ icon: 'question', title: 'Resubmit for Approval?', text: 'Are you sure you want to resubmit this liquidation for approval?', showCancelButton: true, confirmButtonText: 'Yes', cancelButtonText: 'Cancel', reverseButtons: true, confirmButtonColor: '#5b2bd6' })
     .then((result) => { if (result.isConfirmed) doSave(); });
 };
 
@@ -541,7 +738,7 @@ const cacheEditDom = () => {
     'btnSaveAsDraft', 'btnSaveEditMobile', 'btnSaveAsDraftMobile', 'mobileLiquidationNo',
     'mobileStatus', 'mobileCaAmount', 'mobileTotal', 'mobileVariance', 'mobileCaRef',
     'mobileCaDate', 'mobileSubmittedDate', 'mobileExpenseDate', 'mobileApprovedAmount', 'mobilePayableTo',
-    'mobileCostCenter', 'mobileAddress', 'mobilePurpose',
+    'mobileCostCenter', 'mobileAddress', 'mobilePurpose', 'mobileProgressBar', 'mobileLeft', 'mobileStickyTotal',
   ];
   ids.forEach((id) => { domEdit[id] = document.getElementById(id); });
 
@@ -622,8 +819,25 @@ const onEditClick = (e) => {
   const action = btn.getAttribute('data-edit-action');
   if (!editId || !action) return;
 
+  if (action === 'mScan' || action === 'mManual') { startMobileEditExpense(action === 'mScan'); return; }
+  if (action === 'mClose' || action === 'mDone') { closeEditSheet(); return; }
+
   const item = findEditItem(editId);
   if (!item) return;
+
+  if (action === 'mOpen') { openEditSheet(editId); return; }
+  if (action === 'mDelete') {
+    if (!getItemApprovalStatus(item).canEdit) return;
+    Swal.fire({ icon: 'warning', title: 'Remove Item?', text: 'This item will be removed from the liquidation.', showCancelButton: true, confirmButtonText: 'Remove', cancelButtonText: 'Cancel', reverseButtons: true, confirmButtonColor: '#e03131' })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        if (editReceiptOcr) editReceiptOcr.cancelOcr(editId);
+        editExpenseItems = editExpenseItems.filter((i) => i._editId !== editId);
+        editSheetId = null;
+        renderEditExpenseItems();
+      });
+    return;
+  }
 
   switch (action) {
     case 'remove':
@@ -669,6 +883,7 @@ const onEditClick = (e) => {
 // ─── Init ───
 const initEditPage = () => {
   cacheEditDom();
+  document.documentElement.classList.add('lqm-has-sticky');
 
   editReceiptOcr = window.SharedReceiptOcr?.create({
     maxAttachmentBytes: MAX_ATTACHMENT_BYTES,
@@ -692,6 +907,12 @@ const initEditPage = () => {
     domEdit.editExpenseItems.addEventListener('input', onEditInput);
     domEdit.editExpenseItems.addEventListener('change', onEditChange);
     domEdit.editExpenseItems.addEventListener('click', onEditClick);
+  }
+
+  if (mobileEditQuery) {
+    const onBreakpoint = () => { editSheetId = null; renderEditExpenseItems(); };
+    if (mobileEditQuery.addEventListener) mobileEditQuery.addEventListener('change', onBreakpoint);
+    else if (mobileEditQuery.addListener) mobileEditQuery.addListener(onBreakpoint);
   }
 };
 

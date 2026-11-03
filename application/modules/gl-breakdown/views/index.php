@@ -4,7 +4,7 @@
 	.kna-card .card-body { padding: .85rem; }
 	.kna-title { font-size: 20px; font-weight: 600; margin: 0; line-height: 1.2; }
 	.kna-small { font-size: 12px !important; line-height: 1.35; }
-	.kna-kpi { font-size: 19px; line-height: 1.15; font-weight: 600; margin: 0; color: #1d2a3a; }
+	.kna-kpi { font-size: 19px; line-height: 1.15; font-weight: 600; margin: 0; color: var(--brand-900); }
 	.kna-kpi-caption { font-size: 11px; color: #6c757d; margin: 0; }
 	.kna-form-label { margin-bottom: .3rem; font-weight: 600; color: #34495e; }
 	.kna-table td, .kna-table th { font-size: 12px !important; padding: .5rem .45rem; vertical-align: middle; white-space: nowrap; }

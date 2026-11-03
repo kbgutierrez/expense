@@ -92,7 +92,7 @@
 
     .kna-table-main th,
     .kna-table-action th {
-        background: #f8fbff;
+        background: var(--brand-50);
     }
 
     .kna-form-label {

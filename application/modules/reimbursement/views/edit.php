@@ -19,7 +19,7 @@
 	.form-group { margin-bottom: 0; }
 	.btn { border-radius: 4px; font-size: 12px; padding: 6px 14px; }
 	.btn-outline-secondary { border: 1px solid #d1d5db; color: #6b7280; background: transparent; }
-	.btn-primary { background: #6366f1; color: #fff; border: none; }
+	.btn-primary { background: var(--brand-700); color: #fff; border: none; }
 	.btn-warning { background: #f59e0b; color: #fff; border: none; }
 
 	/* Info grid rows */
@@ -33,7 +33,7 @@
 	.kna-compact-value.is-muted { background: #f8fafc; }
 
 	/* Financial summary card */
-	.kna-fin-card { background: #f8fafc; border: 1px solid #e5e7eb; border-left: 3px solid #6366f1; border-radius: 6px; padding: 10px 12px; }
+	.kna-fin-card { background: #f8fafc; border: 1px solid #e5e7eb; border-left: 3px solid var(--brand-700); border-radius: 6px; padding: 10px 12px; }
 	.kna-fin-card.liq { border-left-color: #0f766e; }
 	.kna-fin-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
 	.kna-fin-value { font-size: 15px; font-weight: 700; color: #1f2937; line-height: 1.3; }
@@ -69,7 +69,7 @@
 	.kna-item-row-lock { border: 1px solid #e5e7eb; background: #f3f4f6; color: #9ca3af; }
 	.kna-attachment-cell { font-size: 12px; font-weight: 600; white-space: normal; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
 	.kna-vat-wrap { display: inline-flex; align-items: center; height: 28px; margin: 0; cursor: pointer; }
-	.kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: #2563eb; }
+	.kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: var(--brand-700); }
 
 	/* Attachment thumbnails */
 	.kna-thumb-wrap { display: inline-flex; flex-direction: column; align-items: center; cursor: pointer; margin: 2px 6px 2px 0; max-width: 72px; vertical-align: top; text-align: center; position: relative; }
@@ -79,10 +79,10 @@
 		width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; padding: 0;
 	}
 	.kna-thumb { width: 58px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; transition: transform .15s, border-color .15s; }
-	.kna-thumb:hover { transform: scale(1.1); border-color: #6366f1; }
+	.kna-thumb:hover { transform: scale(1.1); border-color: var(--brand-700); }
 	.kna-thumb-label { font-size: 10px; color: #6b7280; margin-top: 2px; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 	.kna-file-wrap { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; margin-bottom: 3px; max-width: 140px; }
-	.kna-file-wrap a { color: #4f46e5; text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; display: inline-block; vertical-align: middle; }
+	.kna-file-wrap a { color: var(--brand-700); text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; display: inline-block; vertical-align: middle; }
 	.kna-file-wrap a:hover { text-decoration: underline; }
 	.kna-file-wrap .kna-file-remove { color: #ef4444; cursor: pointer; font-size: 10px; margin-left: 2px; }
 	.kna-file-wrap.removed { opacity: 0.4; text-decoration: line-through; }
@@ -110,19 +110,19 @@
 
 	/* Edit-specific styles */
 	.kna-edit-input { font-size: 12px; padding: 4px 8px; border-radius: 4px; border: 1px solid #d1d5db; width: 100%; min-width: 0; }
-	.kna-edit-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
+	.kna-edit-input:focus { outline: none; border-color: var(--brand-700); box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1); }
 	.kna-edit-input:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #6b7280; cursor: not-allowed; }
 	.kna-edit-select { font-size: 12px; padding: 4px 8px; border-radius: 4px; border: 1px solid #d1d5db; width: 100%; min-width: 0; background: #fff; }
-	.kna-edit-select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
+	.kna-edit-select:focus { outline: none; border-color: var(--brand-700); box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1); }
 	.kna-edit-select:disabled { background: #f3f4f6; border-color: #e5e7eb; color: #6b7280; cursor: not-allowed; }
 	.kna-edit-number { text-align: right; }
-	.kna-edit-checkbox { width: 15px; height: 15px; margin: 0; accent-color: #2563eb; }
+	.kna-edit-checkbox { width: 15px; height: 15px; margin: 0; accent-color: var(--brand-700); }
 	.kna-edit-checkbox:disabled { accent-color: #9ca3af; cursor: not-allowed; }
 
 	.kna-rejected-banner { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #991b1b; }
 	.kna-rejected-banner i { margin-right: 6px; }
 	.kna-edit-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
-	.kna-attach-undo { font-size: 10px; color: #6366f1; cursor: pointer; margin-left: 4px; }
+	.kna-attach-undo { font-size: 10px; color: var(--brand-700); cursor: pointer; margin-left: 4px; }
 	.kna-attach-undo:hover { text-decoration: underline; }
 
 	.kna-ocr-status { font-size: 11px; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; line-height: 1.3; }
@@ -131,8 +131,8 @@
 	.kna-ocr-error { color: #dc2626; }
 	.kna-ocr-manual { color: #6b7280; }
 	.kna-ocr-status i { font-size: 12px; width: 14px; text-align: center; }
-	.kna-ocr-manual-btn { background: none; border: none; color: #4f46e5; font-size: 11px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; line-height: 1; }
-	.kna-ocr-manual-btn:hover { color: #4338ca; }
+	.kna-ocr-manual-btn { background: none; border: none; color: var(--brand-700); font-size: 11px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; line-height: 1; }
+	.kna-ocr-manual-btn:hover { color: var(--brand-800); }
 
 	@media (max-width: 767.98px) {
 		.kna-page { padding: 8px 8px 12px; }

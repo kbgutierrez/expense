@@ -30,7 +30,7 @@ class Dashboard extends MY_Controller
         $activeFund = $this->getActiveFundForUser((int) $user_id);
 
         $data = array(
-            'title' => 'K-Net',
+            'title' => config_item('app_long_name'),
             'is_support' => $is_support,
             'main_view' => $set_view,
             'user_id' => $user_id,
@@ -289,6 +289,7 @@ class Dashboard extends MY_Controller
                     'days_overdue' => $daysOverdue > 0 ? $daysOverdue : 0,
                     'requester_name' => $recipient['name'],
                     'action_date' => date('Y-m-d H:i:s'),
+                    'liquidation_link' => base_url('transactions/liquidation/add'),
                 );
 
                 notify_event('LIQUIDATION_OVERDUE', 'CASH_ADVANCE', $referenceNo, array($recipient), $mergeData);

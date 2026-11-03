@@ -9,7 +9,7 @@
 	.kna-form-label { margin-bottom: .3rem; font-weight: 600; font-size: 12px; }
 	.form-control, .form-control-sm { font-size: 12px; border-radius: 4px; padding: 6px 10px; height: 32px; }
 	.btn { border-radius: 4px; font-size: 12px; padding: 6px 14px; }
-	.btn-primary { background: #6366f1; color: #fff; border: none; }
+	.btn-primary { background: var(--brand-700); color: #fff; border: none; }
 	.btn-outline-secondary { border: 1px solid #d1d5db; color: #6b7280; background: transparent; }
 	.btn-outline-secondary:hover { background: #f3f4f6; border-color: #9ca3af; }
 	.kna-section-title {
@@ -24,7 +24,7 @@
 	.kna-badge-pending { background: #fff9db; color: #f59f00; }
 	.kna-badge-approved { background: #e8f7ee; color: #17663a; }
 	.kna-badge-rejected { background: #fff5f5; color: #e03131; }
-	.kna-badge-proxy { background: #e9f3ff; color: #1b4f88; }
+	.kna-badge-proxy { background: var(--brand-100); color: var(--brand-800); }
 
 	.kna-readonly-banner {
 		background: #fff9db; border: 1px solid #f5d76e; color: #7a5b00; border-radius: 6px;
@@ -49,7 +49,7 @@
 	.kna-f-attach { flex: 1 1 220px; }
 
 	.kna-vat-wrap { display: inline-flex; align-items: center; height: 28px; margin: 0; cursor: pointer; }
-	.kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: #2563eb; }
+	.kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: var(--brand-700); }
 	.kna-item-attach-inline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 	.kna-item-attach-inline .kna-attachment-cell { font-size: 10px; font-weight: 600; display: inline-block; max-width: 130px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle; }
 	.kna-item-attach-inline .btn { font-size: 10px; padding: 3px 8px; height: 24px; line-height: 1; }
@@ -60,8 +60,8 @@
 	.kna-ocr-success { color: #059669; }
 	.kna-ocr-error { color: #dc2626; }
 	.kna-ocr-status i { font-size: 10px; width: 12px; text-align: center; }
-	.kna-ocr-manual-btn { background: none; border: none; color: #4f46e5; font-size: 10px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; line-height: 1; }
-	.kna-ocr-manual-btn:hover { color: #4338ca; }
+	.kna-ocr-manual-btn { background: none; border: none; color: var(--brand-700); font-size: 10px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; line-height: 1; }
+	.kna-ocr-manual-btn:hover { color: var(--brand-800); }
 
 	/* Select2 sizing, matched to add.js's initExpenseTypeSelect2 (not the oversized default) */
 	.select2-container--default .select2-selection--single { height: 28px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; }

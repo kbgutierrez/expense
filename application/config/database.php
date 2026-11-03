@@ -5,20 +5,22 @@ defined('BASEPATH') or exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = true;
 
-$hostname = '192.168.0.250';
-// $hostname = '210.213.199.250';
+if (!isset($_ENV['DB_HOST'])) {
+    require_once __DIR__ . '/../../vendor/autoload.php';
+    Dotenv\Dotenv::createImmutable(__DIR__ . '/../../')->safeLoad();
+}
 
-
-
-$testserver = '192.168.1.229';
-// $testserver = '209.141.3.234';
+$dbHost = $_ENV['DB_HOST'] ?? '';
+$dbName = $_ENV['DB_NAME'] ?? 'BigEExpense';
+$dbUser = $_ENV['DB_USER'] ?? '';
+$dbPass = $_ENV['DB_PASS'] ?? '';
 
 $db['default'] = array(
     'dsn' => '',
-    'hostname' => $testserver,
-    'username' => 'sa',
-    'password' => 'Lem0n91$',
-    'database' => 'BigEKnet',
+    'hostname' => $dbHost,
+    'username' => $dbUser,
+    'password' => $dbPass,
+    'database' => $dbName,
     'dbdriver' => 'sqlsrv',
     'dbprefix' => '',
     'pconnect' => false,
@@ -38,10 +40,10 @@ $db['default'] = array(
 
 $db['dbknet'] = array(
     'dsn' => '',
-    'hostname' => $testserver,
-    'username' => 'sa',
-    'password' => 'Lem0n91$',
-    'database' => 'BigEKnet',
+    'hostname' => $dbHost,
+    'username' => $dbUser,
+    'password' => $dbPass,
+    'database' => $dbName,
     'dbdriver' => 'sqlsrv',
     'dbprefix' => '',
     'pconnect' => false,

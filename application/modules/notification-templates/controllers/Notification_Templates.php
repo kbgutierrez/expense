@@ -16,13 +16,13 @@ class Notification_Templates extends MY_Controller
             'label' => 'Transaction Submitted',
             'fires_when' => 'A new request is submitted and enters the approval chain for the first time.',
             'sent_to' => 'The first approver in line.',
-            'accent' => '#2f6eb4',
+            'accent' => '#5b2bd6',
         ),
         'TXN_STEP_APPROVED' => array(
             'label' => 'Step Approved (moves to next approver)',
             'fires_when' => 'An approver approves their step, but at least one more approver still needs to act — the request "advances" to that next person instead of finishing.',
             'sent_to' => 'The next approver in line.',
-            'accent' => '#2f6eb4',
+            'accent' => '#5b2bd6',
         ),
         'TXN_REJECTED' => array(
             'label' => 'Transaction Rejected',
@@ -248,11 +248,15 @@ class Notification_Templates extends MY_Controller
                 'remarks' => 'Sample remarks for preview.',
                 'action_date' => date('Y-m-d H:i:s'),
                 'review_link' => base_url('transactions/approvals/review/RMB2026070100001'),
+                'view_link' => base_url('transactions/reimbursement/view/RMB2026070100001'),
+                'liquidation_link' => base_url('transactions/liquidation/add'),
                 'due_date' => date('Y-m-d', strtotime('-3 days')),
                 'days_overdue' => '3',
+                'app_name' => config_item('app_name'),
+                'app_long_name' => html_escape(config_item('app_long_name')),
             );
 
-            $replace = array();
+            $replace = array('cid:knetlogo' => base_url(config_item('app_logo_email')));
             foreach ($sample as $key => $value) {
                 $replace['{{' . $key . '}}'] = $value;
             }
@@ -292,13 +296,6 @@ class Notification_Templates extends MY_Controller
      */
     private function buildDefaultTemplate($eventCode, $transactionType = '')
     {
-        // Referenced by CID (embedded attachment, wired up in
-        // send_notification_email()) rather than a remote URL — Gmail,
-        // Outlook, and most corporate mail gateways block or strip
-        // remotely-fetched images by default, which showed as a broken
-        // image icon instead of the logo.
-        $logoUrl = 'cid:knetlogo';
-
         $typeLabels = array(
             'CASH_ADVANCE' => 'Cash Advance',
             'LIQUIDATION' => 'Liquidation',
@@ -312,19 +309,19 @@ class Notification_Templates extends MY_Controller
         $copy = array(
             'TXN_SUBMITTED' => array(
                 'subject' => '%TYPE_PREFIX%Approval Required: {{reference_no}}',
-                'accent' => '#2f6eb4',
+                'accent' => '#5b2bd6',
                 'greeting' => 'Dear Approver,',
                 'intro' => 'A new %TYPE% has been submitted and requires your approval.',
-                'extra_rows' => '',
+                'extra_rows' => array(),
                 'cta_label' => 'Review and Approve',
                 'closing' => 'Please review and take action at your earliest convenience.',
             ),
             'TXN_STEP_APPROVED' => array(
                 'subject' => '%TYPE_PREFIX%Approval Required: {{reference_no}}',
-                'accent' => '#2f6eb4',
+                'accent' => '#5b2bd6',
                 'greeting' => 'Dear Approver,',
                 'intro' => 'The %TYPE% below has cleared a previous approval step and now requires your action.',
-                'extra_rows' => '<b style="color:#333333;">Previous Approver:</b> {{approver_name}}<br>',
+                'extra_rows' => array(array('Previous Approver', '{{approver_name}}')),
                 'cta_label' => 'Review and Approve',
                 'closing' => 'Please review and take action at your earliest convenience.',
             ),
@@ -333,7 +330,7 @@ class Notification_Templates extends MY_Controller
                 'accent' => '#e03131',
                 'greeting' => 'Dear {{requester_name}},',
                 'intro' => 'Unfortunately, your %TYPE% below was rejected.',
-                'extra_rows' => '<b style="color:#333333;">Rejected By:</b> {{approver_name}}<br><b style="color:#333333;">Reason:</b> {{remarks}}<br>',
+                'extra_rows' => array(array('Rejected By', '{{approver_name}}'), array('Reason', '{{remarks}}')),
                 'cta_label' => 'View Details',
                 'closing' => 'If you have questions about this decision, please reach out to the approver above.',
             ),
@@ -342,7 +339,7 @@ class Notification_Templates extends MY_Controller
                 'accent' => '#17663a',
                 'greeting' => 'Dear {{requester_name}},',
                 'intro' => 'Good news — your %TYPE% below has been fully approved.',
-                'extra_rows' => '',
+                'extra_rows' => array(),
                 'cta_label' => 'View Details',
                 'closing' => 'No further action is needed from you at this time.',
             ),
@@ -351,7 +348,7 @@ class Notification_Templates extends MY_Controller
                 'accent' => '#0f766e',
                 'greeting' => 'Dear {{requester_name}},',
                 'intro' => 'Your approved %TYPE% has been advised for payment and is now queued for release.',
-                'extra_rows' => '<b style="color:#333333;">Advised By:</b> {{approver_name}}<br>',
+                'extra_rows' => array(array('Advised By', '{{approver_name}}')),
                 'cta_label' => 'View Details',
                 'closing' => 'You will receive another notification once payment is released.',
             ),
@@ -360,7 +357,7 @@ class Notification_Templates extends MY_Controller
                 'accent' => '#17663a',
                 'greeting' => 'Dear {{requester_name}},',
                 'intro' => 'Your %TYPE% payment has been released.',
-                'extra_rows' => '<b style="color:#333333;">Released By:</b> {{approver_name}}<br>',
+                'extra_rows' => array(array('Released By', '{{approver_name}}')),
                 'cta_label' => 'View Details',
                 'closing' => 'This transaction is now complete.',
             ),
@@ -369,7 +366,7 @@ class Notification_Templates extends MY_Controller
                 'accent' => '#e8590c',
                 'greeting' => 'Dear {{requester_name}},',
                 'intro' => 'Your cash advance below was released but has not been liquidated yet. Please file your liquidation as soon as possible.',
-                'extra_rows' => '<b style="color:#333333;">Due Date:</b> {{due_date}}<br><b style="color:#333333;">Days Overdue:</b> {{days_overdue}}<br>',
+                'extra_rows' => array(array('Due Date', '{{due_date}}'), array('Days Overdue', '{{days_overdue}}')),
                 'cta_label' => 'File Liquidation',
                 'closing' => 'If you have already filed your liquidation, please disregard this reminder.',
             ),
@@ -380,28 +377,16 @@ class Notification_Templates extends MY_Controller
         $subject = strtr($c['subject'], $typeTokens);
         $intro = strtr($c['intro'], $typeTokens);
 
-        $body = '<div style="max-width:600px;margin:0 auto;background-color:#f7f7f7;border:1px solid #dddddd;font-family:Arial, sans-serif;">'
-            . '<div style="background-color:#1b2a4a;padding:20px;text-align:center;">'
-            . '<img src="' . $logoUrl . '" alt="K-Net" style="max-width:150px;height:auto;">'
-            . '</div>'
-            . '<div style="padding:20px;">'
-            . '<p>' . $c['greeting'] . '</p>'
-            . '<p>' . $intro . '</p>'
-            . '<div style="margin-top:20px;background-color:#fff;padding:15px;border-left:4px solid ' . $c['accent'] . ';">'
-            . '<b style="color:#333333;">Reference No.:</b> {{reference_no}}<br>'
-            . '<b style="color:#333333;">Transaction Type:</b> {{transaction_type}}<br>'
-            . '<b style="color:#333333;">Requester:</b> {{requester_name}} ({{requester_department}})<br>'
-            . '<b style="color:#333333;">Amount:</b> {{amount}}<br>'
-            . '<b style="color:#333333;">Status:</b> {{status}}<br>'
-            . $c['extra_rows']
-            . '</div>'
-            . '<p style="margin-top:20px;">'
-            . '<a href="{{review_link}}" style="background-color:' . $c['accent'] . ';color:#ffffff;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;font-weight:600;">' . $c['cta_label'] . '</a>'
-            . '</p>'
-            . '<p>' . $c['closing'] . '</p>'
-            . '<p>Regards,<br>K-Net System</p>'
-            . '</div>'
-            . '</div>';
+        $rows = array(
+            array('Reference No.', '{{reference_no}}'),
+            array('Transaction Type', '{{transaction_type}}'),
+            array('Requester', '{{requester_name}} ({{requester_department}})'),
+            array('Amount', '{{amount}}'),
+            array('Status', '{{status}}'),
+        );
+        $rows = array_merge($rows, $c['extra_rows']);
+
+        $body = notification_email_layout($c['greeting'], $intro, $rows, $c['accent'], $c['cta_label'], $c['closing']);
 
         return array('subject' => $subject, 'body_html' => $body);
     }

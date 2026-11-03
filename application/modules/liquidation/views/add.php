@@ -75,7 +75,7 @@
     margin: 0;
     cursor: pointer;
   }
-  .kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: #2563eb; }
+  .kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: var(--brand-700); }
   .kna-item-attach-inline {
     display: flex;
     align-items: center;
@@ -120,12 +120,12 @@
   .kna-ocr-status i { font-size: 10px; width: 12px; text-align: center; }
   .kna-ocr-manual-btn {
     background: none; border: none;
-    color: #4f46e5;
+    color: var(--brand-700);
     font-size: 10px; font-weight: 600;
     cursor: pointer; padding: 0;
     text-decoration: underline; line-height: 1;
   }
-  .kna-ocr-manual-btn:hover { color: #4338ca; }
+  .kna-ocr-manual-btn:hover { color: var(--brand-800); }
 
   /* ===== GLOBAL ===== */
   * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
@@ -136,10 +136,10 @@
     min-height: 100vh;
   }
   .kna-header {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 100%);
     color: white;
     padding: 22px 14px;
-    box-shadow: 0 2px 10px rgba(99, 102, 241, .10);
+    box-shadow: 0 2px 10px rgba(var(--brand-rgb), .10);
   }
   .kna-header-content { max-width: 1100px; margin: 0 auto; }
   .kna-title {
@@ -185,7 +185,7 @@
     font-size: 10px;
     padding: 6px 14px;
   }
-  .btn-primary { background: #6366f1; color: #fff; border: none; }
+  .btn-primary { background: var(--brand-700); color: #fff; border: none; }
   .btn-outline-secondary {
     border: 1px solid #d1d5db;
     color: #6b7280;
@@ -291,7 +291,7 @@
   .kna-fin-card {
     background: #f8fafc;
     border: 1px solid #e5e7eb;
-    border-left: 3px solid #6366f1;
+    border-left: 3px solid var(--brand-700);
     border-radius: 6px;
     padding: 10px 12px;
   }
@@ -348,12 +348,12 @@
     .kna-mobile-overview { display: block; }
 
     .kna-mobile-hero {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      background: linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 100%);
       border-radius: 12px;
       padding: 14px 16px;
       margin-bottom: 10px;
       color: #fff;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+      box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.25);
     }
     .kna-mobile-hero-top {
       display: flex;
@@ -416,22 +416,22 @@
       border-radius: 10px;
       padding: 10px 12px;
       border: 1px solid #e5e7eb;
-      border-left: 3px solid #6366f1;
+      border-left: 3px solid var(--brand-700);
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .kna-info-item-mobile.ca-ref { border-left-color: #3b82f6; }
     .kna-info-item-mobile.ca-amt { border-left-color: #0f766e; }
-    .kna-info-item-mobile.ca-date { border-left-color: #8b5cf6; }
+    .kna-info-item-mobile.ca-date { border-left-color: var(--brand-500); }
     .kna-info-item-mobile.range { border-left-color: #f59e0b; }
     .kna-info-item-mobile.total { border-left-color: #059669; }
     .kna-info-item-mobile.variance { border-left-color: #ef4444; }
     .kna-info-item-mobile.payable { border-left-color: #ec4899; }
     .kna-info-item-mobile.address { border-left-color: #14b8a6; }
     .kna-info-item-mobile.costcenter { border-left-color: #f97316; }
-    .kna-info-item-mobile.status { border-left-color: #6366f1; }
+    .kna-info-item-mobile.status { border-left-color: var(--brand-700); }
     .kna-info-item-mobile.submitted { border-left-color: #64748b; }
-    .kna-info-item-mobile.expense-period { border-left-color: #a855f7; }
-    .kna-info-item-mobile.purpose { border-left-color: #6366f1; }
+    .kna-info-item-mobile.expense-period { border-left-color: var(--accent-600); }
+    .kna-info-item-mobile.purpose { border-left-color: var(--brand-700); }
     .kna-info-label-mobile {
       font-size: 9px;
       font-weight: 700;
@@ -455,7 +455,7 @@
       border-radius: 10px;
       padding: 10px 12px;
       border: 1px solid #e5e7eb;
-      border-left: 3px solid #6366f1;
+      border-left: 3px solid var(--brand-700);
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .kna-info-purpose-mobile .kna-info-value-mobile {
@@ -534,6 +534,32 @@
     .kna-mobile-hero-amounts { grid-template-columns: 1fr 1fr; }
     .kna-mobile-hero-amt:nth-child(3) { grid-column: 1 / -1; }
   }
+  @media (max-width: 768px) {
+    .kna-page > .d-flex.mb-2 { margin-bottom: 12px !important; }
+    .kna-page > .d-flex.mb-2 .kna-small { display: none; }
+    .kna-page > .d-flex.mb-2 .kna-title { font-size: 18px; font-weight: 700; color: #1f2937; }
+    .kna-page > .d-flex.mb-2 .btn-outline-secondary {
+      width: 38px; height: 38px; padding: 0; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0; border-color: #e5e7eb; background: #fff;
+    }
+    .kna-page > .d-flex.mb-2 .btn-outline-secondary i { font-size: 15px; margin: 0 !important; }
+    .kna-card { background: transparent; border: 0; box-shadow: none; }
+    .kna-card .card-body { padding: 0 !important; }
+    #formNewLiquidation > hr,
+    .kna-expense-section-header { display: none !important; }
+    .lqm-receipt-has .kna-attachment-cell { min-width: 0; overflow: hidden; }
+    .lqm-sheet-body .kna-ocr-status { margin-top: 8px; font-size: 12px; }
+    .kna-mobile-sticky-actions,
+    .kna-mobile-sticky-actions.d-none { display: flex !important; align-items: center; padding: 10px 14px calc(12px + env(safe-area-inset-bottom)) !important; }
+    .kna-page { padding-bottom: 96px; }
+    .lqm-sticky-total { flex: 1 1 auto; line-height: 1.2; }
+    .lqm-sticky-total span { display: block; font-size: 11px; color: #6b7280; }
+    .lqm-sticky-total b { font-size: 16px; color: #1f2937; white-space: nowrap; }
+    .kna-mobile-sticky-actions .lqm-btn-ghost { flex: 0 0 auto !important; background: transparent; color: #4b5563; font-weight: 600; font-size: 13px !important; padding: 10px 8px !important; }
+    .kna-mobile-sticky-actions .lqm-btn-submit { flex: 0 0 auto !important; min-width: 120px; border-radius: 12px !important; font-size: 14px !important; font-weight: 600; }
+  }
+
     @media (max-width: 768px) {
   .kna-info-row-3,
   .kna-info-row-4 {
@@ -634,60 +660,41 @@
 
         <!-- Mobile: Compact Hero + Grid (hidden on desktop) -->
         <div class="kna-mobile-overview">
-          <div class="kna-mobile-hero">
-            <div class="kna-mobile-hero-top">
-              <div class="kna-mobile-hero-id">
-                <span>CA Ref</span>
-                <span id="mobileCaRef">-</span>
+          <div class="lqm-ca">
+            <div class="lqm-ca-top">
+              <div class="lqm-ca-id">
+                <div class="lqm-label">Cash Advance</div>
+                <div class="lqm-ca-ref" id="mobileCaRef">-</div>
               </div>
-              <div class="kna-mobile-hero-status"><?= !empty($is_edit_mode) ? 'Draft' : 'New'; ?></div>
+              <label class="lqm-ca-change d-none" id="mobileCaChange">
+                Change
+                <select id="mobileCaSelect" aria-label="Select cash advance"></select>
+              </label>
             </div>
-            <div class="kna-mobile-hero-amounts">
-              <div class="kna-mobile-hero-amt">
-                <div class="kna-mobile-hero-amt-label">CA Amount</div>
-                <div class="kna-mobile-hero-amt-value" id="mobileCaAmount">-</div>
+            <div class="lqm-ca-purpose" id="mobilePurpose">-</div>
+            <div class="lqm-ca-balance">
+              <div class="lqm-ca-row">
+                <span>Approved</span>
+                <b id="mobileApprovedAmount">-</b>
               </div>
-              <div class="kna-mobile-hero-amt">
-                <div class="kna-mobile-hero-amt-label">Approved</div>
-                <div class="kna-mobile-hero-amt-value" id="mobileApprovedAmount">-</div>
+              <div class="lqm-progress"><i id="mobileProgressBar"></i></div>
+              <div class="lqm-ca-row lqm-ca-row-muted">
+                <span>Liquidated <span id="mobileTotal">-</span></span>
+                <span id="mobileLeft"></span>
               </div>
-              <div class="kna-mobile-hero-amt">
-                <div class="kna-mobile-hero-amt-label">Total</div>
-                <div class="kna-mobile-hero-amt-value" id="mobileTotal">-</div>
-              </div>
-              <div class="kna-mobile-hero-amt">
-                <div class="kna-mobile-hero-amt-label">Variance</div>
-                <div class="kna-mobile-hero-amt-value small" id="mobileVariance">-</div>
-              </div>
+              <span class="lqm-variance d-none" id="mobileVariance">-</span>
             </div>
-          </div>
-          <div class="kna-info-section-mobile">
-            <div class="kna-info-grid-mobile">
-              <div class="kna-info-item-mobile ca-date">
-                <div class="kna-info-label-mobile">CA Date</div>
-                <div class="kna-info-value-mobile" id="mobileCaDate">-</div>
+            <details class="lqm-ca-details">
+              <summary>Cash advance details</summary>
+              <div class="lqm-ca-grid">
+                <div><span class="lqm-label">CA Amount</span><span id="mobileCaAmount">-</span></div>
+                <div><span class="lqm-label">CA Date</span><span id="mobileCaDate">-</span></div>
+                <div><span class="lqm-label">Expense Range</span><span id="mobileDateRange">-</span></div>
+                <div><span class="lqm-label">Payable To</span><span id="mobilePayableTo">-</span></div>
+                <div class="lqm-full"><span class="lqm-label">Cost Center</span><span id="mobileCostCenter">-</span></div>
+                <div class="lqm-full"><span class="lqm-label">Address</span><span id="mobileAddress">-</span></div>
               </div>
-              <div class="kna-info-item-mobile range">
-                <div class="kna-info-label-mobile">Expense Range</div>
-                <div class="kna-info-value-mobile" id="mobileDateRange">-</div>
-              </div>
-              <div class="kna-info-item-mobile payable">
-                <div class="kna-info-label-mobile">Payable To</div>
-                <div class="kna-info-value-mobile" id="mobilePayableTo">-</div>
-              </div>
-              <div class="kna-info-item-mobile costcenter">
-                <div class="kna-info-label-mobile">Cost Center</div>
-                <div class="kna-info-value-mobile" id="mobileCostCenter">-</div>
-              </div>
-              <div class="kna-info-item-mobile address full-width">
-                <div class="kna-info-label-mobile">Address</div>
-                <div class="kna-info-value-mobile" id="mobileAddress">-</div>
-              </div>
-              <div class="kna-info-item-mobile purpose full-width">
-                <div class="kna-info-label-mobile">Purpose / Notes</div>
-                <div class="kna-info-value-mobile" id="mobilePurpose">-</div>
-              </div>
-            </div>
+            </details>
           </div>
         </div>
 
@@ -719,14 +726,13 @@
 
   <!-- Mobile sticky actions -->
   <div class="kna-mobile-sticky-actions d-none">
-    <a href="<?= base_url('transactions/liquidation'); ?>" class="btn btn-outline-secondary">
-      <i class="fas fa-arrow-left"></i>
-    </a>
-    <button type="button" class="btn btn-outline-primary" id="btnSaveDraftLiquidationMobile">
-      <i class="fas fa-save"></i> Draft
-    </button>
-    <button type="button" class="btn btn-primary" id="btnSaveNewLiquidationMobile">
-      <i class="fas fa-check"></i> Submit
+    <div class="lqm-sticky-total">
+      <span>Total</span>
+      <b id="mobileStickyTotal">₱0.00</b>
+    </div>
+    <button type="button" class="btn lqm-btn-ghost" id="btnSaveDraftLiquidationMobile">Save draft</button>
+    <button type="button" class="btn btn-primary lqm-btn-submit" id="btnSaveNewLiquidationMobile">
+      <?= !empty($is_edit_mode) ? 'Update &amp; Submit' : 'Submit'; ?>
     </button>
   </div>
 

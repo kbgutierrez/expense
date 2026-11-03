@@ -52,7 +52,7 @@
         line-height: 1.2;
         font-weight: 600;
         margin: 0;
-        color: #1d2a3a;
+        color: var(--brand-900);
     }
 
     .kna-kpi-caption {
@@ -84,7 +84,7 @@
     .kna-fund-usage-fill {
         height: 100%;
         border-radius: inherit;
-        background: #2f6eb4;
+        background: var(--brand-700);
         transition: width .2s ease;
     }
 
@@ -140,9 +140,9 @@
         font-size: 14px;
     }
 
-    .kna-request-icon.type-cash-advance { background: #e6f4ff; color: #0056b3; }
+    .kna-request-icon.type-cash-advance { background: var(--brand-100); color: var(--brand-800); }
     .kna-request-icon.type-liquidation { background: #fff4e0; color: #8a5a00; }
-    .kna-request-icon.type-reimbursement { background: #f3e8ff; color: #6b21a8; }
+    .kna-request-icon.type-reimbursement { background: var(--accent-100); color: var(--brand-900); }
 
     .kna-request-main {
         flex: 1 1 auto;
@@ -217,7 +217,7 @@
         margin-top: 1px;
     }
 
-    .kna-passbook-icon.is-in { background: #e6f4ff; color: #0056b3; }
+    .kna-passbook-icon.is-in { background: var(--brand-100); color: var(--brand-800); }
     .kna-passbook-icon.is-out { background: #eef2f7; color: #45566b; }
 
     .kna-passbook-main {
@@ -260,7 +260,7 @@
         white-space: nowrap;
     }
 
-    .kna-passbook-amount-label.is-in { color: #0056b3; }
+    .kna-passbook-amount-label.is-in { color: var(--brand-800); }
     .kna-passbook-amount-label.is-out { color: #45566b; }
 
     .kna-passbook-amount {
@@ -289,7 +289,7 @@
         margin-top: 4px;
         font-size: 12px;
         font-weight: 600;
-        color: #4a6b8a;
+        color: var(--brand-700);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -298,7 +298,7 @@
     }
 
     .kna-show-more-btn:hover {
-        color: #0b4f8c;
+        color: var(--brand-800);
     }
 
     .kna-show-more-btn:focus {
@@ -306,7 +306,7 @@
     }
 
     .kna-show-more-btn:focus-visible {
-        outline: 2px solid #2f6eb4;
+        outline: 2px solid var(--brand-700);
         outline-offset: 2px;
         border-radius: 4px;
     }
@@ -442,8 +442,8 @@
     }
 
     .kna-badge-liquidation {
-        background: #e9f3ff;
-        color: #1b4f88;
+        background: var(--brand-100);
+        color: var(--brand-800);
     }
 
     .kna-badge-submitted {
@@ -479,13 +479,13 @@
     }
 
     .kna-kpi-link:focus-visible {
-        outline: 2px solid #2f6eb4;
+        outline: 2px solid var(--brand-700);
         outline-offset: 2px;
         border-radius: 4px;
     }
 
     .kna-kpi-link:hover .kna-kpi {
-        color: #0b4f8c;
+        color: var(--brand-800);
     }
 
     .kna-attention-list {
@@ -567,7 +567,7 @@
     .kna-kpi-row > div { flex: 1 1 160px; min-width: 140px; }
 
     .kna-fund-card {
-        border-left: 3px solid #2f6eb4;
+        border-left: 3px solid var(--brand-700);
     }
 
     .kna-approval-card {
@@ -686,8 +686,8 @@
     }
 
     .kna-quicklink-tile:hover {
-        border-color: #c7d6e6;
-        background: #f3f8fd;
+        border-color: var(--brand-200);
+        background: var(--brand-50);
         color: inherit;
         text-decoration: none;
     }
@@ -700,8 +700,8 @@
         align-items: center;
         justify-content: center;
         font-size: 9px;
-        background: #e9f1fb;
-        color: #2f6eb4;
+        background: var(--brand-100);
+        color: var(--brand-700);
         flex: 0 0 auto;
     }
 

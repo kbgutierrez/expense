@@ -37,9 +37,9 @@
 	.kna-legend-note { font-size: 11px; color: var(--kna-ink-muted); margin-top: 8px; }
 
 	.kna-badge { padding: .2rem .4rem; border-radius: 3px; font-size: 11px; font-weight: 600; display: inline-block; }
-	.kna-badge-ca { background: #e6f4ff; color: #0056b3; }
+	.kna-badge-ca { background: var(--brand-100); color: var(--brand-800); }
 	.kna-badge-rmb { background: #fff4e5; color: #a15c00; }
-	.kna-badge-lq { background: #f3e8ff; color: #6b21a8; }
+	.kna-badge-lq { background: var(--accent-100); color: var(--brand-900); }
 	.kna-badge-completed { background: #e8f7ee; color: #17663a; }
 	.kna-badge-pending { background: #fff5d9; color: #7a5b00; }
 	.kna-table td, .kna-table th { font-size: 12px; vertical-align: middle; }

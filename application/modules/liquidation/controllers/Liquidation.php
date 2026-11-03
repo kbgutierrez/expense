@@ -686,7 +686,12 @@ class Liquidation extends MY_Controller
                 );
 
                 if (!is_array($headerResult) || !isset($headerResult['GeneratedLiquidationID']) || $headerResult['GeneratedLiquidationID'] === '') {
-                    return $this->respondError("Failed to create liquidation");
+                    $dbMessage = is_array($headerResult) && isset($headerResult['message']) ? (string) $headerResult['message'] : '';
+                    log_message('error', 'sp_insert_liquidation_header failed: ' . json_encode($headerResult));
+                    if (stripos($dbMessage, 'No approval matrix found') !== false) {
+                        return $this->respondError('No approval workflow is set up yet for your department/amount range. Please contact your administrator.');
+                    }
+                    return $this->respondError($dbMessage !== '' ? $dbMessage : 'Failed to create liquidation');
                 }
 
                 $liquidationId = $headerResult['GeneratedLiquidationID'];
@@ -922,7 +927,9 @@ class Liquidation extends MY_Controller
             return;
         }
 
-        if ($this->hasApproverApproved($ref)) {
+        $editHeader = $this->getDraftHeaderByLiquidationId($ref);
+        $editStatus = is_array($editHeader) && isset($editHeader['status_code']) ? trim((string) $editHeader['status_code']) : '';
+        if ($editStatus !== 'LQ_REJECTED' && $this->hasApproverApproved($ref)) {
             redirect('transactions/liquidation/view/' . rawurlencode($ref));
             return;
         }
@@ -967,11 +974,11 @@ class Liquidation extends MY_Controller
             }
 
             $statusCode = isset($header['status_code']) ? trim((string) $header['status_code']) : '';
-            if ($statusCode !== 'LQ_SUBMITTED') {
-                return $this->respondError('Only submitted liquidations can be edited.');
+            if ($statusCode !== 'LQ_SUBMITTED' && $statusCode !== 'LQ_REJECTED') {
+                return $this->respondError('Only submitted or rejected liquidations can be edited.');
             }
 
-            if ($this->hasApproverApproved($liquidationId)) {
+            if ($statusCode === 'LQ_SUBMITTED' && $this->hasApproverApproved($liquidationId)) {
                 return $this->respondError('This liquidation can no longer be edited because an approver has already approved it.');
             }
 
@@ -1044,11 +1051,11 @@ class Liquidation extends MY_Controller
             }
 
             $existingStatus = isset($existingHeader['status_code']) ? trim((string) $existingHeader['status_code']) : '';
-            if ($existingStatus !== 'LQ_SUBMITTED') {
-                return $this->respondError('Only submitted liquidations can be updated.');
+            if ($existingStatus !== 'LQ_SUBMITTED' && $existingStatus !== 'LQ_REJECTED') {
+                return $this->respondError('Only submitted or rejected liquidations can be updated.');
             }
 
-            if ($this->hasApproverApproved($liquidationId)) {
+            if ($existingStatus === 'LQ_SUBMITTED' && $this->hasApproverApproved($liquidationId)) {
                 return $this->respondError('This liquidation can no longer be edited because an approver has already approved it.');
             }
 
@@ -1088,6 +1095,19 @@ class Liquidation extends MY_Controller
             );
             if ($updateHeaderResult !== TRUE) {
                 return $this->respondError('Failed to update liquidation header.');
+            }
+
+            $restartRoute = $existingStatus === 'LQ_REJECTED' && $statusCode === 'LQ_SUBMITTED';
+            if ($restartRoute) {
+                try {
+                    $this->sp->readData(
+                        build_sp('sp_restart_approval_route', 2),
+                        array('ReferenceId' => $liquidationId, 'UserId' => $currentUserId),
+                        'result'
+                    );
+                } catch (\Throwable $e) {
+                    return $this->respondError('Liquidation was saved but could not be routed for approval: ' . $e->getMessage());
+                }
             }
 
             $approvals = $this->Liquidation_model->list_approvals($liquidationId);
@@ -1178,6 +1198,16 @@ class Liquidation extends MY_Controller
                 if ($detailResult !== TRUE) {
                     return $this->respondError('Failed to save expense detail at index ' . $index);
                 }
+            }
+
+            if ($restartRoute) {
+                try {
+                    $this->sp->readData(build_sp('sp_auto_approve_own_turn', 1), array('ReferenceId' => $liquidationId), 'row');
+                } catch (\Throwable $e) {
+                    log_message('error', 'sp_auto_approve_own_turn failed for ' . $liquidationId . ': ' . $e->getMessage());
+                }
+
+                $this->notifyFirstApprover($liquidationId);
             }
 
             $message = $statusCode === 'LQ_DRAFT'

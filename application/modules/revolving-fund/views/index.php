@@ -4,7 +4,7 @@
 	.kna-card .card-body { padding: .85rem; }
 	.kna-title { font-size: 20px; font-weight: 600; margin: 0; line-height: 1.2; }
 	.kna-small { font-size: 12px !important; line-height: 1.35; }
-	.kna-kpi { font-size: 19px; line-height: 1.15; font-weight: 600; margin: 0; color: #1d2a3a; }
+	.kna-kpi { font-size: 19px; line-height: 1.15; font-weight: 600; margin: 0; color: var(--brand-900); }
 	.kna-kpi-caption { font-size: 11px; color: #6c757d; margin: 0; }
 	.kna-form-label { margin-bottom: .3rem; font-weight: 600; color: #34495e; }
 	.kna-table td, .kna-table th { font-size: 12px !important; padding: .5rem .45rem; vertical-align: middle; white-space: nowrap; }
@@ -15,7 +15,7 @@
 	.kna-badge-locked { background: #fdeeee; color: #a12626; }
 	.kna-badge-person { background: #e6f4ff; color: #0056b3; }
 	.kna-badge-department { background: #fff4e0; color: #8a5a00; }
-	.kna-badge-company { background: #f3e8ff; color: #6b21a8; }
+	.kna-badge-company { background: var(--brand-100); color: var(--brand-800); }
 	.kna-badge-topup { background: #e8f7ee; color: #17663a; }
 	.kna-badge-adjustment { background: #fff4e0; color: #8a5a00; }
 	.kna-mobile-list .kna-item { border: 1px solid #dde3eb; border-radius: 6px; padding: .65rem; margin-bottom: .5rem; background: #fff; }
@@ -29,12 +29,12 @@
 	.kna-rf-tabs { border-bottom: 1px solid #d9e0e7; margin-bottom: .85rem; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
 	.kna-rf-tabs::-webkit-scrollbar { height: 4px; }
 	.kna-rf-tabs .nav-link { font-size: 13px; font-weight: 600; color: #4a5a6a; border: none; border-bottom: 2px solid transparent; padding: .55rem .9rem; white-space: nowrap; }
-	.kna-rf-tabs .nav-link.active { color: #2f6eb4; border-bottom-color: #2f6eb4; background: transparent; }
+	.kna-rf-tabs .nav-link.active { color: var(--brand-700); border-bottom-color: var(--brand-700); background: transparent; }
 	.kna-rf-tabs .nav-link i { margin-right: 5px; }
 
 	/* ---- Modal styling (reused expense-types pattern) ---- */
 	.kna-modal-header { background: #f8f9fa; border-bottom: 1px solid #e9ecef; padding: .75rem 1rem; }
-	.kna-modal-header .modal-title { font-weight: 600; color: #1d2a3a; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+	.kna-modal-header .modal-title { font-weight: 600; color: var(--brand-900); font-size: 14px; display: flex; align-items: center; gap: 6px; }
 	.kna-modal-header .close { padding: .5rem; margin: -.5rem -.5rem -.5rem auto; }
 	.kna-form-section { margin-bottom: 1rem; }
 	.kna-form-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 700; color: #6c757d; margin-bottom: .6rem; padding-bottom: .35rem; border-bottom: 1px solid #eef2f7; }
@@ -233,7 +233,7 @@
 							<div class="col-md-8 form-group">
 								<label class="kna-small kna-form-label">Holder <span class="text-danger">*</span></label>
 								<select class="form-control form-control-sm kna-small" id="rfFundScopeSelect" style="width:100%;"></select>
-								<input type="text" class="form-control form-control-sm kna-small d-none" id="rfFundScopeText" maxlength="200" placeholder="e.g. K-Net Main">
+								<input type="text" class="form-control form-control-sm kna-small d-none" id="rfFundScopeText" maxlength="200" placeholder="e.g. Main Office">
 							</div>
 						</div>
 					</div>

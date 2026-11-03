@@ -20,10 +20,10 @@ const charts = {
 };
 
 const KNA_SERIES = {
-	blue: '#2a78d6',
-	orange: '#eb6834',
-	aqua: '#1baf7a',
-	violet: '#4a3aa7',
+	blue: '#5b2bd6',
+	orange: '#3b8bff',
+	aqua: '#c026d3',
+	violet: '#3b1a8a',
 };
 
 const KNA_STATUS = {

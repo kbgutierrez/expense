@@ -935,6 +935,19 @@ class Reimbursement extends MY_Controller
                 return $this->respondError('Failed to update reimbursement header.');
             }
 
+            $restartRoute = $existingStatus === 'RMB_REJECTED' && $statusCode === 'RMB_SUBMITTED';
+            if ($restartRoute) {
+                try {
+                    $this->sp->readData(
+                        build_sp('sp_restart_approval_route', 2),
+                        array('ReferenceId' => $reimbursementId, 'UserId' => $currentUserId),
+                        'result'
+                    );
+                } catch (\Throwable $e) {
+                    return $this->respondError('Reimbursement was saved but could not be routed for approval: ' . $e->getMessage());
+                }
+            }
+
             $approvals = $this->Reimbursement_model->list_approvals($reimbursementId);
 
             $approvedItemIds = array();
@@ -1032,6 +1045,16 @@ class Reimbursement extends MY_Controller
                 'HEADER',
                 $reimbursementId
             );
+
+            if ($restartRoute) {
+                try {
+                    $this->sp->readData(build_sp('sp_auto_approve_own_turn', 1), array('ReferenceId' => $reimbursementId), 'row');
+                } catch (\Throwable $e) {
+                    log_message('error', 'sp_auto_approve_own_turn failed for ' . $reimbursementId . ': ' . $e->getMessage());
+                }
+
+                $this->notifyFirstApprover($reimbursementId);
+            }
 
             $message = $statusCode === 'RMB_DRAFT'
                 ? 'Reimbursement saved as draft successfully'

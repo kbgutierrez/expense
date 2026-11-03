@@ -68,26 +68,31 @@ class Approval_matrix_model extends MY_Model
 
     public function list_approvers()
     {
-        $designations = array('Supervisor', 'Production Supervisor', 'Accounting', 'Manager', 'General Manager', 'B.I and App Devt Asst Mngr', 'NSM', 'DSM', 'QA Head', 'Director', 'Top Management');
-        $rank = "CASE A.designation"
-            . " WHEN 'Supervisor' THEN 1"
-            . " WHEN 'Production Supervisor' THEN 2"
-            . " WHEN 'Accounting' THEN 3"
-            . " WHEN 'QA Head' THEN 4"
-            . " WHEN 'DSM' THEN 5"
-            . " WHEN 'NSM' THEN 6"
-            . " WHEN 'Manager' THEN 7"
-            . " WHEN 'General Manager' THEN 8"
-            . " WHEN 'B.I and App Devt Asst Mngr' THEN 9"
-            . " WHEN 'Director' THEN 10"
-            . " WHEN 'Top Management' THEN 11"
+        $exact = array('Accounting', 'NSM', 'DSM', 'Top Management');
+        $keywords = array('Supervisor', 'Head', 'Manager', 'Mngr', 'Director', 'Chief', 'President');
+        $match = array("A.designation IN ('" . implode("', '", $exact) . "')");
+        foreach ($keywords as $keyword) {
+            $match[] = "A.designation LIKE '%" . $keyword . "%'";
+        }
+        $rank = "CASE"
+            . " WHEN A.designation = 'Top Management' OR A.designation LIKE '%President%' OR A.designation LIKE '%Chief%' THEN 11"
+            . " WHEN A.designation LIKE '%Director%' THEN 10"
+            . " WHEN A.designation LIKE '%General Manager%' THEN 9"
+            . " WHEN A.designation LIKE '%Ass%t%Manager%' OR A.designation LIKE '%Asst%Mngr%' THEN 7"
+            . " WHEN A.designation LIKE '%Manager%' OR A.designation LIKE '%Mngr%' THEN 8"
+            . " WHEN A.designation = 'NSM' THEN 6"
+            . " WHEN A.designation = 'DSM' THEN 5"
+            . " WHEN A.designation LIKE '%Supervisor%' THEN 1"
+            . " WHEN A.designation LIKE '%Head%' THEN 4"
+            . " WHEN A.designation = 'Accounting' THEN 3"
             . " ELSE 99 END";
 
         $this->db->select('A.id, A.firstname, A.lastname, A.designation, A.department_id, B.short_name AS department', false)
             ->from('BigEUsers.dbo.users A')
             ->join('BigEHRIS.dbo.department B', 'A.department_id = B.department_id', 'inner')
             ->where('A.is_active', 1)
-            ->where_in('A.designation', $designations)
+            ->where('ISNULL(A.is_test, 0) = 0', null, false)
+            ->where('(' . implode(' OR ', $match) . ')', null, false)
             ->order_by($rank, 'ASC', false)
             ->order_by('B.short_name', 'ASC')
             ->order_by('A.lastname', 'ASC');

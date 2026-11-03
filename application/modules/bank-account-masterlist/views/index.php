@@ -17,10 +17,10 @@
 
 	.kna-acct-masked { font-family: ui-monospace, "SF Mono", Consolas, monospace; letter-spacing: .5px; }
 	.kna-btn-reveal { border: none; background: transparent; color: #6c7c8c; padding: 2px 4px; }
-	.kna-btn-reveal:hover { color: #2f6eb4; }
+	.kna-btn-reveal:hover { color: var(--brand-700); }
 
 	.kna-modal-header { background: #f8f9fa; border-bottom: 1px solid #e9ecef; padding: .75rem 1rem; }
-	.kna-modal-header .modal-title { font-weight: 600; color: #1d2a3a; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+	.kna-modal-header .modal-title { font-weight: 600; color: var(--brand-900); font-size: 14px; display: flex; align-items: center; gap: 6px; }
 	.kna-modal-header .close { padding: .5rem; margin: -.5rem -.5rem -.5rem auto; }
 	.kna-form-section { margin-bottom: 1rem; }
 	.kna-form-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 700; color: #6c757d; margin-bottom: .6rem; padding-bottom: .35rem; border-bottom: 1px solid #eef2f7; }

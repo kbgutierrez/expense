@@ -12,15 +12,15 @@
 	.kna-table-action th,
 	.kna-table-action td { text-align: center; background: #fff; }
 	.kna-table-main th,
-	.kna-table-action th { background: #f8fbff; }
+	.kna-table-action th { background: var(--brand-50); }
 	.kna-tab { border: 1px solid #d9e0e7; border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 600; background: #fff; color: #32475b; cursor: pointer; }
-	.kna-tab.is-active { background: #2f6eb4; border-color: #2f6eb4; color: #fff; }
+	.kna-tab.is-active { background: var(--brand-700); border-color: var(--brand-700); color: #fff; }
 	.kna-badge { padding: .2rem .4rem; border-radius: 3px; font-size: 11px; font-weight: 600; display: inline-block; }
 	.kna-badge-active { background: #e8f7ee; color: #17663a; }
 	.kna-badge-inactive { background: #eef2f7; color: #495869; }
-	.kna-badge-cash-advance { background: #e6f4ff; color: #0056b3; }
+	.kna-badge-cash-advance { background: var(--brand-100); color: var(--brand-800); }
 	.kna-badge-liquidation { background: #fff4e0; color: #8a5a00; }
-	.kna-badge-reimbursement { background: #f3e8ff; color: #6b21a8; }
+	.kna-badge-reimbursement { background: var(--accent-100); color: var(--brand-900); }
 	.kna-badge-replenishment { background: #e0f7f4; color: #0f766e; }
 	.kna-form-label { margin-bottom: .3rem; font-weight: 600; }
 </style>

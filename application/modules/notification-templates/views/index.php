@@ -10,9 +10,9 @@
 	.kna-table-main { min-width: 900px; margin-bottom: 0; }
 	.kna-table-action { width: 90px; margin-bottom: 0; border-left: 1px solid #e5ecf3; }
 	.kna-table-action th, .kna-table-action td { text-align: center; background: #fff; }
-	.kna-table-main th, .kna-table-action th { background: #f8fbff; }
+	.kna-table-main th, .kna-table-action th { background: #f6f3ff; }
 	.kna-tab { border: 1px solid #d9e0e7; border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 600; background: #fff; color: #32475b; cursor: pointer; }
-	.kna-tab.is-active { background: #2f6eb4; border-color: #2f6eb4; color: #fff; }
+	.kna-tab.is-active { background: #5b2bd6; border-color: #5b2bd6; color: #fff; }
 	.kna-badge { padding: .2rem .4rem; border-radius: 3px; font-size: 11px; font-weight: 600; display: inline-block; }
 	.kna-badge-active { background: #e8f7ee; color: #17663a; }
 	.kna-badge-inactive { background: #eef2f7; color: #495869; }

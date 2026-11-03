@@ -8,15 +8,15 @@
 
 	.kna-step-head { display: flex; align-items: center; gap: 8px; margin-bottom: .75rem; }
 	.kna-step-num {
-		flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: #2f6eb4; color: #fff;
+		flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: #5b2bd6; color: #fff;
 		font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
 	}
 	.kna-step-title { font-size: 13px; font-weight: 700; color: #1f2937; }
 	.kna-step-hint { font-size: 11px; color: #6b7280; margin-top: 1px; }
 
 	.kna-event-info {
-		margin-top: .6rem; padding: 10px 12px; border-radius: 6px; border-left: 4px solid #2f6eb4;
-		background: #f8fbff; font-size: 12px; line-height: 1.5;
+		margin-top: .6rem; padding: 10px 12px; border-radius: 6px; border-left: 4px solid #5b2bd6;
+		background: #f6f3ff; font-size: 12px; line-height: 1.5;
 	}
 	.kna-event-info .kna-event-info-row { margin-bottom: 3px; }
 	.kna-event-info .kna-event-info-row:last-child { margin-bottom: 0; }
@@ -40,13 +40,13 @@
 	.kna-mail-subject-input {
 		border: none; outline: none; width: 100%; padding: 9px 14px; font-size: 13px; color: #202124;
 	}
-	.kna-mail-subject-input:focus { box-shadow: inset 0 -2px 0 #2f6eb4; }
+	.kna-mail-subject-input:focus { box-shadow: inset 0 -2px 0 #5b2bd6; }
 	.kna-mail-body-wrap .note-editor.note-frame { border: none; border-radius: 0; }
 	.kna-mail-body-wrap .note-toolbar { background: #fafbfc; border-bottom: 1px solid #f1f3f4; }
 
 	.kna-insert-field-toggle {
 		display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600;
-		color: #2f6eb4; cursor: pointer; padding: 4px 0; user-select: none;
+		color: #5b2bd6; cursor: pointer; padding: 4px 0; user-select: none;
 	}
 	.kna-insert-field-toggle:hover { text-decoration: underline; }
 	.kna-insert-field-toggle i.fa-chevron-down { transition: transform .15s ease; font-size: 10px; }
@@ -59,10 +59,10 @@
 		border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background .1s ease;
 	}
 	.kna-merge-field-row:last-child { border-bottom: none; }
-	.kna-merge-field-row:hover { background: #f8fbff; }
+	.kna-merge-field-row:hover { background: #f6f3ff; }
 	.kna-merge-field-token {
-		flex: 0 0 auto; font-family: monospace; font-size: 11px; background: #eef2ff; color: #4338ca;
-		border: 1px solid #c7d2fe; border-radius: 4px; padding: 2px 8px; white-space: nowrap;
+		flex: 0 0 auto; font-family: monospace; font-size: 11px; background: #ede9fe; color: #3b1a8a;
+		border: 1px solid #ddd6fe; border-radius: 4px; padding: 2px 8px; white-space: nowrap;
 	}
 	.kna-merge-field-desc { color: #4b5563; }
 	.kna-merge-field-hint { font-size: 10px; color: #9ca3af; margin-left: auto; flex: 0 0 auto; white-space: nowrap; }
@@ -147,7 +147,7 @@
 				<div class="kna-mail-compose-titlebar"><i class="fas fa-envelope"></i> New Message</div>
 				<div class="kna-mail-field">
 					<span class="kna-mail-field-label">From</span>
-					<span class="kna-mail-field-value">K-Net System</span>
+					<span class="kna-mail-field-value"><?= html_escape(config_item('app_name') . ' - ' . config_item('app_long_name')); ?></span>
 				</div>
 				<div class="kna-mail-field">
 					<span class="kna-mail-field-label">To</span>

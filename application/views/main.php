@@ -1,6 +1,6 @@
 <?php
   if(!$this->session->userdata('is_logged_in')) {
-    redirect('https://lsbizportal.lemonsquare.com.ph/testportal');
+    redirect(config_item('portal_url'));
 }
 ?>
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
 
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>K-Net</title>
+  <title><?= html_escape(config_item('app_name') . ' - ' . config_item('app_long_name')); ?></title>
   <meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
   <link rel="icon" href="<?=base_url("assets/img/note-icon.png")?>" type="image/x-icon" />
 
@@ -55,9 +55,8 @@
       <!-- Logo Header -->
       <div class="logo-header bg-primary">
 
-        <a href="<?=base_url('dashboard/');?>" class="logo text-center text-white">
-          <img src="<?=base_url('assets/img/k-net logo.png');?>" alt="navbar brand" class="navbar-brand"
-            style="width: 65%; margin-top:-7.5px;">
+        <a href="<?=base_url('dashboard/');?>" class="logo erlp-brand" title="<?= html_escape(config_item('app_long_name')); ?>">
+          <img src="<?=base_url(config_item('app_logo_header') . '?v=' . (is_file(FCPATH . config_item('app_logo_header')) ? filemtime(FCPATH . config_item('app_logo_header')) : time()));?>" alt="<?= html_escape(config_item('app_name') . ' - ' . config_item('app_long_name')); ?>" class="navbar-brand erlp-brand-logo">
         </a>
         <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse"
           data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -185,7 +184,7 @@
           </ul>
         </div>
         <div class="logout border text-center mt-4 " >
-            <a class="text-decoration-none" href="https://lsbizportal.lemonsquare.com.ph/testportal/">
+            <a class="text-decoration-none" href="<?= html_escape(config_item('portal_url')); ?>">
               <button type="button" data-toggle="tooltip" data-placement="bottom" title="lsbizportal"
                 class="btn-logout btn btn-link text-white text-decoration-none" id="btn-logout"
                 data-original-title="lsbizportal"><i class="far fa-arrow-alt-circle-left px-1 text-white"></i>Back to
@@ -222,8 +221,8 @@
     <i class="fas fa-bars"></i>
   </button>
   <aside class="mobile-nav-drawer" aria-label="Mobile navigation">
-    <div class="mobile-nav-drawer-header" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px; border-bottom: 1px solid #efe7f8; background: #fff;">
-      <a class="mobile-nav-lsbiz-logo mobile-nav-lsbiz-header" href="https://lsbizportal.lemonsquare.com.ph/testportal/" aria-label="Back to Lsbiz">
+    <div class="mobile-nav-drawer-header" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--brand-200); background: #fff;">
+      <a class="mobile-nav-lsbiz-logo mobile-nav-lsbiz-header" href="<?= html_escape(config_item('portal_url')); ?>" aria-label="Back to Lsbiz">
         <img src="<?=base_url('assets/img/lsbiz.png')?>" alt="Lsbiz" />
         <i class="fas fa-external-link-alt" aria-hidden="true"></i>
       </a>

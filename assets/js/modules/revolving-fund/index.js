@@ -178,7 +178,7 @@ const rffRenderSummary = (rows) => {
 	const total = rows.length;
 	const active = rows.filter((r) => r.statusCode === 'RF_ACTIVE').length;
 	const inactive = total - active;
-	const totalBalance = rows.reduce((sum, r) => sum + r.availableBalance, 0);
+	const totalBalance = rows.filter((r) => r.statusCode === 'RF_ACTIVE').reduce((sum, r) => sum + r.availableBalance, 0);
 
 	rff.dom.sumTotal.textContent = String(total);
 	rff.dom.sumActive.textContent = String(active);

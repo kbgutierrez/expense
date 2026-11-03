@@ -34,7 +34,7 @@ const syncExpenseItemFromDom = (item) => {
   if (liveReference !== '' || !item.reference) item.reference = liveReference;
   if (liveAmount !== '' || !item.amount) item.amount = liveAmount;
   if (liveRemarks !== '' || !item.remarks) item.remarks = liveRemarks;
-  item.isVattable = getLiveItemCheckboxField(item.id, 'isVattable');
+  if (getItemFieldElements(item.id, 'isVattable').length) item.isVattable = getLiveItemCheckboxField(item.id, 'isVattable');
 };
 const getAllAttachments = (it) => (it.existingAttachments || []).map((n) => ({ name: n })).concat(it.attachments || []);
 const getAttachmentNamesCsv = (it) => (it.existingAttachments || []).map(normalizeDate).filter(Boolean).join(',');
@@ -92,6 +92,7 @@ const updateTotal = () => {
   if (domAdd.newLiquidatedAmount) domAdd.newLiquidatedAmount.textContent = formatPHP(total);
   if (domAdd.mobileTotal) domAdd.mobileTotal.textContent = formatPHP(total);
   updateVariance();
+  updateMobileProgress();
 };
 
 const updateVariance = () => {
@@ -110,7 +111,10 @@ const updateVariance = () => {
     mob = '0.00';
   }
   domAdd.newVariance.innerHTML = html;
-  if (domAdd.mobileVariance) domAdd.mobileVariance.textContent = mob;
+  if (domAdd.mobileVariance) {
+    domAdd.mobileVariance.textContent = refund > 0 && total > 0 ? `${formatPHP(refund)} to return` : (reimburse > 0 ? `${formatPHP(reimburse)} to reimburse` : (total > 0 ? 'Fully liquidated' : mob));
+    domAdd.mobileVariance.className = 'lqm-variance' + (total <= 0 ? ' d-none' : (refund > 0 ? ' is-return' : (reimburse > 0 ? ' is-reimburse' : ' is-balanced')));
+  }
 };
 
 // ─── Date Range ───
@@ -128,7 +132,7 @@ const syncDateRange = () => {
 
 // ─── DOM Cache ───
 const cacheAddDom = () => {
-  const ids = ['liquidationRef','draftEditWindowDays','isEditMode','newCaRef','newCaAmount','newApprovedAmount','newCaDate','newDateRange','newLiquidatedAmount','newVariance','newPurpose','newPayableTo','newAddress','newCostCenter','btnAddExpenseItem','expenseItemsContainer','btnSaveDraftLiquidation','btnSaveNewLiquidation','btnSaveDraftLiquidationMobile','btnSaveNewLiquidationMobile','mobileCaRef','mobileCaAmount','mobileApprovedAmount','mobileTotal','mobileVariance','mobileCaDate','mobileDateRange','mobilePayableTo','mobileCostCenter','mobileAddress','mobilePurpose'];
+  const ids = ['liquidationRef','draftEditWindowDays','isEditMode','newCaRef','newCaAmount','newApprovedAmount','newCaDate','newDateRange','newLiquidatedAmount','newVariance','newPurpose','newPayableTo','newAddress','newCostCenter','btnAddExpenseItem','expenseItemsContainer','btnSaveDraftLiquidation','btnSaveNewLiquidation','btnSaveDraftLiquidationMobile','btnSaveNewLiquidationMobile','mobileCaRef','mobileCaAmount','mobileApprovedAmount','mobileTotal','mobileVariance','mobileCaDate','mobileDateRange','mobilePayableTo','mobileCostCenter','mobileAddress','mobilePurpose','mobileCaSelect','mobileCaChange','mobileProgressBar','mobileLeft','mobileStickyTotal'];
   ids.forEach((id) => { domAdd[id] = document.getElementById(id); });
 };
 
@@ -244,10 +248,187 @@ const ocr = {
 // ─── Vendor ───
 const vendorBadge = (it) => `<span class="kna-vendor-toggle-badge">${escapeHtml(getVendorStatus(it))}</span>`;
 
+const mobileLqQuery = window.matchMedia ? window.matchMedia('(max-width: 768px)') : null;
+const isMobileLq = () => Boolean(mobileLqQuery && mobileLqQuery.matches);
+let mobileSheetItemId = null;
+
+const isBlankExpenseItem = (it) => !normalizeDate(it.documentDate) && !normalizeDate(it.expenseType) && !normalizeDate(it.reference)
+  && getItemAmount(it) <= 0 && !normalizeDate(it.remarks) && !hasVendorData(it) && !getAllAttachments(it).length;
+
+const formatShortDate = (ymd) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalizeDate(ymd));
+  if (!m) return '';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}`;
+};
+
+const getExpenseTypeShortName = (code) => {
+  const et = getExpenseTypeByCode(code);
+  if (!et) return '';
+  return normalizeDate(et.long_text || et.description || et.short_text || et.expense_code);
+};
+
+const renderMobileCard = (it) => {
+  const atts = getAllAttachments(it);
+  const ocrState = liquidationReceiptOcr ? liquidationReceiptOcr.getItemOcrState(it.id) : { status: 'idle' };
+  const name = getExpenseTypeShortName(it.expenseType) || normalizeDate(it.remarks) || 'Expense';
+  const sub = [formatShortDate(it.documentDate), it.reference ? `OR ${normalizeDate(it.reference)}` : ''].filter(Boolean).join(' · ') || 'Tap to complete details';
+  let flag = '';
+  if (ocrState.status === 'scanning') flag = '<div class="lqm-exp-flag is-ocr"><i class="fas fa-spinner fa-spin"></i> Reading receipt</div>';
+  else if (!atts.length) flag = '<div class="lqm-exp-flag">Attach receipt</div>';
+  const amount = getItemAmount(it) > 0 ? formatPHP(getItemAmount(it)) : '—';
+  return `
+    <button type="button" class="lqm-exp" data-item-action="mOpen" data-item-id="${it.id}">
+      <span class="lqm-exp-thumb${atts.length ? '' : ' is-missing'}"><i class="fas ${atts.length ? 'fa-receipt' : 'fa-exclamation'}"></i></span>
+      <span class="lqm-exp-main">
+        <span class="lqm-exp-name d-block">${escapeHtml(name)}</span>
+        <span class="lqm-exp-sub d-block">${escapeHtml(sub)}</span>
+      </span>
+      <span class="lqm-exp-right">
+        <span class="lqm-exp-amt d-block">${escapeHtml(amount)}</span>
+        ${flag}
+      </span>
+    </button>`;
+};
+
+const renderMobileSheet = (it) => {
+  const dis = draftCanEdit ? '' : 'disabled';
+  const atts = getAllAttachments(it);
+  const receipt = atts.length
+    ? `<div class="lqm-receipt-has">${ocr.label(atts, it.id)}${draftCanEdit ? `<button type="button" data-item-action="attach" data-item-id="${it.id}">Replace</button>` : ''}</div>`
+    : `<button type="button" class="lqm-receipt" data-item-action="attach" data-item-id="${it.id}" ${dis}><i class="fas fa-camera"></i>Add receipt photo<small>We'll fill in the details for you</small></button>`;
+  const vendorSummary = normalizeDate(it.vendorName) || (it.isVattable ? 'VAT' : 'Optional');
+  const isNew = isBlankExpenseItem(it);
+  return `
+    <div class="lqm-sheet-backdrop" data-item-action="mClose" data-item-id="${it.id}"></div>
+    <div class="lqm-sheet" role="dialog" aria-modal="true" aria-label="Expense">
+      <div class="lqm-grab"></div>
+      <div class="lqm-sheet-head">
+        <b>${isNew ? 'New expense' : 'Expense'}</b>
+        <button type="button" class="lqm-icon-btn" data-item-action="mClose" data-item-id="${it.id}" aria-label="Close"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="lqm-sheet-body">
+        ${receipt}
+        <input type="file" class="d-none" data-item-file="upload" data-item-id="${it.id}" accept="image/*,application/pdf" multiple>
+        <input type="file" class="d-none" data-item-file="camera" data-item-id="${it.id}" accept="image/*" capture="environment">
+        ${ocr.statusHtml(it.id)}
+        <div class="lqm-amount-wrap">
+          <span class="lqm-label">Amount <span class="lqm-req">*</span></span>
+          <div class="lqm-amount"><span>₱</span><input type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-item-field="amount" data-item-id="${it.id}" value="${escapeHtml(it.amount)}" ${dis}></div>
+        </div>
+        <div class="lqm-two">
+          <div class="lqm-field"><span class="lqm-label">Date <span class="lqm-req">*</span></span><input type="date" class="lqm-input" data-item-field="documentDate" data-item-id="${it.id}" value="${escapeHtml(it.documentDate)}" ${dis}></div>
+          <div class="lqm-field"><span class="lqm-label">OR / Invoice no. <span class="lqm-req">*</span></span><input type="text" class="lqm-input" data-item-field="reference" data-item-id="${it.id}" value="${escapeHtml(it.reference)}" placeholder="e.g. 004512" ${dis}></div>
+        </div>
+        <div class="lqm-field"><span class="lqm-label">Expense type <span class="lqm-req">*</span></span><select class="lqm-input" data-item-field="expenseType" data-item-id="${it.id}" ${dis}>${expenseTypeOptionsMarkup(it.expenseType)}</select></div>
+        <div class="lqm-field"><span class="lqm-label">Description <span class="lqm-req">*</span></span><input type="text" class="lqm-input" data-item-field="remarks" data-item-id="${it.id}" value="${escapeHtml(it.remarks)}" placeholder="What was this for?" ${dis}></div>
+        <details class="lqm-more">
+          <summary>Vendor &amp; VAT <span>${escapeHtml(vendorSummary)} <i class="fas fa-chevron-down"></i></span></summary>
+          <div class="lqm-field"><span class="lqm-label">Vendor name</span><input type="text" class="lqm-input" data-item-field="vendorName" data-item-id="${it.id}" value="${escapeHtml(it.vendorName)}" ${dis}></div>
+          <div class="lqm-field"><span class="lqm-label">Vendor address</span><input type="text" class="lqm-input" data-item-field="vendorAddress" data-item-id="${it.id}" value="${escapeHtml(it.vendorAddress)}" ${dis}></div>
+          <div class="lqm-field"><span class="lqm-label">TIN</span><input type="text" class="lqm-input" data-item-field="vendorTin" data-item-id="${it.id}" value="${escapeHtml(it.vendorTin)}" ${dis}></div>
+          <label class="lqm-vat">VAT-able receipt <input type="checkbox" data-item-field="isVattable" data-item-id="${it.id}" ${it.isVattable ? 'checked' : ''} ${dis}></label>
+        </details>
+      </div>
+      <div class="lqm-sheet-foot">
+        ${draftCanEdit ? `<button type="button" class="lqm-icon-btn" data-item-action="mDelete" data-item-id="${it.id}" aria-label="Delete expense"><i class="fas fa-trash"></i></button>` : ''}
+        <button type="button" class="lqm-btn lqm-btn-primary" data-item-action="mDone" data-item-id="${it.id}">${draftCanEdit ? 'Save expense' : 'Close'}</button>
+      </div>
+    </div>`;
+};
+
+const renderMobileExpenseItems = () => {
+  const visible = expenseItems.filter((it) => !isBlankExpenseItem(it) || it.id === mobileSheetItemId);
+  const listed = visible.filter((it) => it.id !== mobileSheetItemId || !isBlankExpenseItem(it));
+  const count = listed.length;
+  const dis = draftCanEdit ? '' : 'disabled';
+  let body;
+  if (!count) {
+    body = `
+      <div class="lqm-empty">
+        <div class="lqm-empty-icon"><i class="fas fa-camera"></i></div>
+        <b>Scan your first receipt</b>
+        <p>Take a photo and we'll fill in the amount, date and vendor for you.</p>
+        <button type="button" class="lqm-btn lqm-btn-primary w-100" data-item-action="mScan" data-item-id="-1" ${dis}><i class="fas fa-camera"></i> Scan receipt</button>
+        <button type="button" class="lqm-btn lqm-btn-link" data-item-action="mManual" data-item-id="-1" ${dis}>or add manually</button>
+      </div>`;
+  } else {
+    body = listed.map(renderMobileCard).join('') + (draftCanEdit ? `
+      <div class="lqm-actions">
+        <button type="button" class="lqm-btn lqm-btn-outline" data-item-action="mScan" data-item-id="-1"><i class="fas fa-camera"></i> Scan receipt</button>
+        <button type="button" class="lqm-btn lqm-btn-outline" data-item-action="mManual" data-item-id="-1"><i class="fas fa-plus"></i> Add manually</button>
+      </div>` : '');
+  }
+  const sheetItem = mobileSheetItemId ? findExpenseItem(mobileSheetItemId) : null;
+  if (!sheetItem) mobileSheetItemId = null;
+  document.documentElement.classList.toggle('lqm-sheet-open', Boolean(sheetItem));
+
+  domAdd.expenseItemsContainer.innerHTML = `
+    <div class="lqm-list">
+      <div class="lqm-section"><b>Expenses</b><span>${count} item${count === 1 ? '' : 's'}</span></div>
+      ${body}
+    </div>
+    <div class="lqm-sheet-wrap">${sheetItem ? renderMobileSheet(sheetItem) : ''}</div>`;
+
+  updateTotal();
+  syncDateRange();
+};
+
+const openMobileSheet = (itemId) => {
+  mobileSheetItemId = itemId;
+  renderExpenseItems();
+};
+
+const closeMobileSheet = () => {
+  const it = mobileSheetItemId ? findExpenseItem(mobileSheetItemId) : null;
+  if (it && isBlankExpenseItem(it) && expenseItems.length > 1) {
+    if (liquidationReceiptOcr) liquidationReceiptOcr.cancelOcr(it.id);
+    expenseItems = expenseItems.filter((x) => x.id !== it.id);
+  }
+  mobileSheetItemId = null;
+  renderExpenseItems();
+};
+
+const startMobileExpense = (scan) => {
+  const blank = expenseItems.find((it) => isBlankExpenseItem(it));
+  const item = blank || createExpenseItem();
+  if (!blank) expenseItems.push(item);
+  openMobileSheet(item.id);
+  if (scan) ocr.prompt(item.id);
+};
+
+const syncMobileCaSelect = () => {
+  const src = domAdd.newCaRef, dst = domAdd.mobileCaSelect, wrap = domAdd.mobileCaChange;
+  if (!src || !dst || !wrap) return;
+  dst.innerHTML = src.innerHTML;
+  dst.value = src.value;
+  dst.disabled = src.disabled;
+  const realOptions = Array.from(src.options).filter((o) => o.value);
+  wrap.classList.toggle('d-none', src.disabled || realOptions.length < 2);
+  if (!src.value && domAdd.mobileCaRef) domAdd.mobileCaRef.textContent = realOptions.length ? 'Select cash advance' : 'No pending cash advance';
+};
+
+const updateMobileProgress = () => {
+  const approved = safeNum(domAdd.newApprovedAmount?.value), total = getTotal();
+  if (domAdd.mobileStickyTotal) domAdd.mobileStickyTotal.textContent = formatPHP(total);
+  if (domAdd.mobileProgressBar) {
+    const pct = approved > 0 ? Math.min(100, (total / approved) * 100) : 0;
+    domAdd.mobileProgressBar.style.width = `${pct}%`;
+    domAdd.mobileProgressBar.classList.toggle('is-over', approved > 0 && total > approved);
+  }
+  if (domAdd.mobileLeft) {
+    if (approved <= 0) domAdd.mobileLeft.textContent = '';
+    else if (total <= approved) domAdd.mobileLeft.textContent = `${formatPHP(approved - total)} left`;
+    else domAdd.mobileLeft.textContent = `${formatPHP(total - approved)} over`;
+  }
+};
+
 // ─── Render ───
 const renderExpenseItems = () => {
   if (!domAdd.expenseItemsContainer) return;
   if (!expenseItems.length) expenseItems = [createExpenseItem()];
+  if (isMobileLq()) return renderMobileExpenseItems();
+  document.documentElement.classList.remove('lqm-sheet-open');
 
   const rows = expenseItems.map((it, i) => {
     const et = getExpenseTypeByCode(it.expenseType), desc = normalizeDate((et || {}).description);
@@ -320,8 +501,8 @@ const validateBeforeSave = (statusCode) => {
     return Swal.fire({
       icon: 'warning',
       title: 'Incomplete item',
-      html: `Row <strong>${missingIndex + 1}</strong> is missing: <strong>${escapeHtml(missingFields.join(', '))}</strong>.`,
-    }), null;
+      html: `${isMobileLq() ? 'Expense' : 'Row'} <strong>${missingIndex + 1}</strong> is missing: <strong>${escapeHtml(missingFields.join(', '))}</strong>.`,
+    }).then(() => { if (isMobileLq() && item.id) openMobileSheet(item.id); }), null;
   }
   if (state.totalAmount <= 0)
     return swal('warning', 'Invalid total', 'Total must be greater than 0.'), null;
@@ -333,6 +514,14 @@ const validateBeforeSave = (statusCode) => {
 
 // ─── Save / Submit ───
 const sendLiquidation = (statusCode) => {
+  if (isMobileLq()) {
+    const filled = expenseItems.filter((it) => !isBlankExpenseItem(it));
+    if (filled.length !== expenseItems.length) {
+      expenseItems = filled.length ? filled : [createExpenseItem()];
+      mobileSheetItemId = null;
+      renderExpenseItems();
+    }
+  }
   const state = validateBeforeSave(statusCode);
   if (!state) return;
 
@@ -505,8 +694,34 @@ const onClick = (e) => {
   if (!btn) return;
   const itemId = Number(btn.getAttribute('data-item-id')), action = btn.getAttribute('data-item-action');
   if (!itemId || !action) return;
+
+  if (action === 'mScan' || action === 'mManual') {
+    if (draftCanEdit) startMobileExpense(action === 'mScan');
+    return;
+  }
+  if (action === 'mClose' || action === 'mDone') {
+    closeMobileSheet();
+    return;
+  }
+
   const item = findExpenseItem(itemId);
   if (!item) return;
+
+  if (action === 'mOpen') {
+    openMobileSheet(itemId);
+    return;
+  }
+  if (action === 'mDelete') {
+    swal('warning', 'Remove expense?', 'This expense and its receipt will be removed.', { showCancelButton: true, confirmButtonText: 'Remove', cancelButtonText: 'Cancel', reverseButtons: true, confirmButtonColor: '#e03131' })
+      .then((r) => {
+        if (!r.isConfirmed) return;
+        if (liquidationReceiptOcr) liquidationReceiptOcr.cancelOcr(itemId);
+        expenseItems = expenseItems.filter((it) => it.id !== itemId);
+        mobileSheetItemId = null;
+        renderExpenseItems();
+      });
+    return;
+  }
 
   switch (action) {
     case 'remove':
@@ -522,6 +737,7 @@ const onClick = (e) => {
 // ─── Init ───
 const initAddPage = () => {
   cacheAddDom();
+  document.documentElement.classList.add('lqm-has-sticky');
   draftEditWindowDays = safeNum(domAdd.draftEditWindowDays?.value) || 7;
   currentLiquidationId = normalizeDate(domAdd.liquidationRef?.value || '');
   liquidationReceiptOcr = window.SharedReceiptOcr && window.SharedReceiptOcr.create({
@@ -541,6 +757,20 @@ const initAddPage = () => {
   domAdd.btnSaveDraftLiquidationMobile?.addEventListener('click', () => sendLiquidation('LQ_DRAFT'));
   domAdd.btnAddExpenseItem?.addEventListener('click', () => { expenseItems.push(createExpenseItem()); renderExpenseItems(); });
   domAdd.newCaRef?.addEventListener('change', syncCADetails);
+  if (domAdd.newCaRef && window.MutationObserver) {
+    new MutationObserver(syncMobileCaSelect).observe(domAdd.newCaRef, { childList: true, attributes: true, attributeFilter: ['disabled'] });
+  }
+  domAdd.newCaRef?.addEventListener('change', syncMobileCaSelect);
+  domAdd.mobileCaSelect?.addEventListener('change', () => {
+    domAdd.newCaRef.value = domAdd.mobileCaSelect.value;
+    domAdd.newCaRef.dispatchEvent(new Event('change'));
+  });
+  syncMobileCaSelect();
+  if (mobileLqQuery) {
+    const onBreakpoint = () => { mobileSheetItemId = null; expenseItems.forEach(syncExpenseItemFromDom); renderExpenseItems(); };
+    if (mobileLqQuery.addEventListener) mobileLqQuery.addEventListener('change', onBreakpoint);
+    else if (mobileLqQuery.addListener) mobileLqQuery.addListener(onBreakpoint);
+  }
   domAdd.expenseItemsContainer?.addEventListener('input', onInput);
   domAdd.expenseItemsContainer?.addEventListener('change', onChange);
   domAdd.expenseItemsContainer?.addEventListener('click', onClick);

@@ -222,7 +222,8 @@ INNER JOIN tbl_expense_category B ON A.expense_category = B.expense_code";
     COALESCE(PT.firstname + ' ' + PT.lastname, C.payable_to) AS payable_to,
     C.address,
     E.cost_center_name,
-    C.approved_amount
+    C.approved_amount,
+    C.created_date AS ca_date
 FROM tbl_liquidation_header A
 INNER JOIN tbl_status B ON A.status = B.status_code
 INNER JOIN tbl_cash_advance C ON A.cash_advance_id = C.cash_advance_id

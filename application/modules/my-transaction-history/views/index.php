@@ -4,15 +4,15 @@
 	.kna-card .card-body { padding: .85rem; }
 	.kna-title { font-size: 20px; font-weight: 600; margin: 0; line-height: 1.2; }
 	.kna-small { font-size: 12px !important; line-height: 1.35; }
-	.kna-kpi { font-size: 19px; line-height: 1.15; font-weight: 600; margin: 0; color: #1d2a3a; }
+	.kna-kpi { font-size: 19px; line-height: 1.15; font-weight: 600; margin: 0; color: var(--brand-900); }
 	.kna-kpi-caption { font-size: 11px; color: #6c757d; margin: 0; }
 	.kna-form-label { margin-bottom: .3rem; font-weight: 600; color: #34495e; }
 	.kna-table td, .kna-table th { font-size: 12px !important; padding: .5rem .45rem; vertical-align: middle; white-space: nowrap; }
 	.kna-badge { padding: .2rem .4rem; border-radius: 3px; font-size: 11px; font-weight: 600; display: inline-block; }
-	.kna-badge-ca { background: #e6f4ff; color: #0056b3; }
+	.kna-badge-ca { background: var(--brand-100); color: var(--brand-800); }
 	.kna-badge-rpl { background: #fff4e5; color: #a15c00; }
 	.kna-badge-rmb { background: #e8f7ee; color: #17663a; }
-	.kna-badge-lq { background: #f3e8ff; color: #6b21a8; }
+	.kna-badge-lq { background: var(--accent-100); color: var(--brand-900); }
 	.kna-mobile-list .kna-item { border: 1px solid #dde3eb; border-radius: 6px; padding: .65rem; margin-bottom: .5rem; background: #fff; }
 	.kna-mobile-list .kna-item:last-child { margin-bottom: 0; }
 	.kna-mobile-list .kna-row { display: flex; align-items: center; justify-content: space-between; gap: .45rem; margin-bottom: .25rem; }

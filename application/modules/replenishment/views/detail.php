@@ -75,7 +75,7 @@
 		flex: 0 0 auto;
 		transition: background .15s, color .15s, border-color .15s;
 	}
-	.kna-history-btn:hover { background: #eef2ff; border-color: #6366f1; color: #4f46e5; }
+	.kna-history-btn:hover { background: var(--brand-100); border-color: var(--brand-700); color: var(--brand-700); }
 
 	.kna-history-modal-overlay {
 		position: fixed;
@@ -137,7 +137,7 @@
 	.kna-fin-card {
 		background: #f8fafc;
 		border: 1px solid #e5e7eb;
-		border-left: 3px solid #2f6eb4;
+		border-left: 3px solid var(--brand-700);
 		border-radius: 6px;
 		padding: 10px 12px;
 	}

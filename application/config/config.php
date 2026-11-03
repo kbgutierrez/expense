@@ -24,7 +24,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'https://lsbizportal.lemonsquare.com.ph/k-net/';
+$config['base_url'] = 'https://lsbizportal.lemonsquare.com.ph/' . basename(rtrim(FCPATH, '/\\')) . '/';
 // $config['base_url'] = 'http://209.141.3.238/test/';
 
 /*
@@ -537,6 +537,8 @@ $config['modules_locations'] = array(
 );
 
 
-$config['kflow_bridge_path'] = '/var/www/shared/knet_kflow_bridge/'; // MUST be writable by both systems
-$config['kflow_base_url']    = 'https://lsbizportal.lemonsquare.com.ph/k-flow-test/';     // K-flow base URL
+$config['kflow_bridge_path'] = $_ENV['KFLOW_BRIDGE_PATH'] ?? '/var/www/shared/knet_kflow_bridge/'; // MUST be writable by both systems
+$config['kflow_base_url']    = $_ENV['KFLOW_BASE_URL'] ?? 'https://lsbizportal.lemonsquare.com.ph/k-flow-test/';     // K-flow base URL
+$config['portal_url']        = $_ENV['PORTAL_URL'] ?? 'https://lsbizportal.lemonsquare.com.ph/testportal/';
+$config['portal_id']         = (int) ($_ENV['PORTAL_ID'] ?? 47);
 $config['kflow_secret_key']  = '123456789012345678901234567890123'; // 32-character secret key for K-flow integration

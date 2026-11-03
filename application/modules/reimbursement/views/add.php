@@ -33,7 +33,7 @@
 	.form-control, .form-control-sm { font-size: 12px; border-radius: 4px; padding: 6px 10px; height: 32px; }
 	textarea.form-control { min-height: 48px; font-size: 12px; padding: 6px 10px; }
 	.btn { border-radius: 4px; font-size: 12px; padding: 6px 14px; }
-	.btn-primary { background: #6366f1; color: #fff; border: none; }
+	.btn-primary { background: var(--brand-700); color: #fff; border: none; }
 	.btn-outline-secondary { border: 1px solid #d1d5db; color: #6b7280; background: transparent; }
 	.btn-outline-secondary:hover { background: #f3f4f6; border-color: #9ca3af; }
 	.kna-section-title {
@@ -80,7 +80,7 @@
 	.kna-f-attach { flex: 1 1 150px; }
 	.kna-f-remarks { flex: 1 1 150px; }
 	.kna-vat-wrap { display: inline-flex; align-items: center; height: 28px; margin: 0; cursor: pointer; }
-	.kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: #2563eb; }
+	.kna-vat-input { width: 14px; height: 14px; margin: 0; accent-color: var(--brand-700); }
 	.kna-item-attach-inline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 	.kna-item-attach-inline .kna-attachment-cell { font-size: 10px; font-weight: 600; display: inline-block; max-width: 130px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle; }
 	.kna-item-attach-inline .btn { font-size: 10px; padding: 3px 8px; height: 24px; line-height: 1; }
@@ -98,8 +98,8 @@
 	.kna-ocr-error { color: #dc2626; }
 	.kna-ocr-manual { color: #6b7280; }
 	.kna-ocr-status i { font-size: 10px; width: 12px; text-align: center; }
-	.kna-ocr-manual-btn { background: none; border: none; color: #4f46e5; font-size: 10px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; line-height: 1; }
-	.kna-ocr-manual-btn:hover { color: #4338ca; }
+	.kna-ocr-manual-btn { background: none; border: none; color: var(--brand-700); font-size: 10px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; line-height: 1; }
+	.kna-ocr-manual-btn:hover { color: var(--brand-800); }
 
 	@media (max-width: 768px) {
 		.kna-page { padding: 8px 4px; }

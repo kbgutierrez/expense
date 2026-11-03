@@ -28,7 +28,7 @@
     }
 
     .kna-pivot-table thead th {
-        background: #f8fbff;
+        background: var(--brand-50);
         position: sticky;
         top: 0;
         z-index: 1;
@@ -38,7 +38,7 @@
     .kna-pivot-table th.kna-pivot-rowhead {
         position: sticky;
         left: 0;
-        background: #f8fbff;
+        background: var(--brand-50);
         z-index: 2;
         text-align: left;
         min-width: 220px;
@@ -50,7 +50,7 @@
 
     .kna-pivot-table tfoot td,
     .kna-pivot-table tfoot th {
-        background: #f1f5fb;
+        background: var(--brand-100);
         font-weight: 700;
     }
 
@@ -65,8 +65,8 @@
     }
 
     .kna-badge-proxy {
-        background: #e9f3ff;
-        color: #1b4f88;
+        background: var(--brand-100);
+        color: var(--brand-800);
         padding: .1rem .35rem;
         border-radius: 3px;
         font-size: 10px;

@@ -374,10 +374,10 @@
 				icon: 'question',
 				showCancelButton: true,
 				confirmButtonText: 'Gallery',
-				confirmButtonColor: '#2563eb',
+				confirmButtonColor: '#5b2bd6',
 				showDenyButton: true,
 				denyButtonText: 'Camera',
-				denyButtonColor: '#16a34a',
+				denyButtonColor: '#8b5cf6',
 				cancelButtonText: 'Cancel',
 			}).then((result) => {
 				if (result.isConfirmed && typeof callbacks.onGallery === 'function') {

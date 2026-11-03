@@ -246,7 +246,7 @@ if (!function_exists('_groq_ocr_call_api')) {
         $payload = array(
             'model' => $model,
             'temperature' => 0.2,
-            'max_completion_tokens' => 1000,
+            'max_completion_tokens' => 300,
             'top_p' => 1,
             'stream' => false,
             'messages' => array(
@@ -263,7 +263,7 @@ if (!function_exists('_groq_ocr_call_api')) {
         if (strpos($model, 'qwen/') === 0) {
             $payload['reasoning_effort'] = 'none';
             $payload['reasoning_format'] = 'hidden';
-            $payload['max_completion_tokens'] = 1024;
+            $payload['max_completion_tokens'] = 300;
         }
 
         $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');

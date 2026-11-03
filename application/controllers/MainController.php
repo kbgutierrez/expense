@@ -17,7 +17,7 @@ class MainController extends MY_Controller
        
       
             $data = array(
-                'title' => 'K-Net',
+                'title' => config_item('app_name'),
                 'main_view' => '../modules/dashboard/views/dashboard',
                 'module_group' => $this->module_group,
                 'module' => $this->module,
@@ -28,7 +28,7 @@ class MainController extends MY_Controller
         $this->load->view('main', $data);
         
         } else {
-            redirect('https://lsbizportal.lemonsquare.com.ph/testportal');
+            redirect(config_item('portal_url'));
         }
     }
    

@@ -32,7 +32,7 @@
 		line-height: 1.15;
 		font-weight: 600;
 		margin: 0;
-		color: #1d2a3a;
+		color: var(--brand-900);
 	}
 
 	.kna-kpi-caption {
@@ -43,7 +43,7 @@
 
 	.kna-kpi-row { display: flex; flex-wrap: wrap; gap: .65rem; margin-bottom: .85rem; }
 	.kna-kpi-row > div { flex: 1 1 160px; min-width: 140px; }
-	.kna-kpi-fund { border-left: 3px solid #2f6eb4; }
+	.kna-kpi-fund { border-left: 3px solid var(--brand-700); }
 
 	.kna-table td,
 	.kna-table th {

@@ -149,7 +149,7 @@ const renderEditAttachment = (name, item, isRemoved = false) => {
 	}
 	const fileRemove = !isRemoved ? `<i class="fas fa-times kna-file-remove" data-edit-action="removeAttachment" data-edit-id="${item._editId}" data-filename="${escapeHtml(name)}" title="Remove attachment"></i>` : '';
 	return `<span class="kna-file-wrap ${isRemoved ? 'removed' : ''}" data-filename="${escapeHtml(name)}" data-edit-id="${item._editId}">
-		<i class="fas fa-file-alt" style="color:#6366f1;font-size:11px;"></i>
+		<i class="fas fa-file-alt" style="color:#5b2bd6;font-size:11px;"></i>
 		<a href="${url}" target="_blank" rel="noopener" title="${escapeHtml(name)}">${escapeHtml(name)}</a>${fileRemove}${undoLink}
 	</span>`;
 };
@@ -446,7 +446,8 @@ const getEditFormPayload = () => {
 // ─── Validation ───
 const validateEditBeforeSave = () => {
 	const editableItems = editExpenseItems.filter((item) => getItemApprovalStatus(item).canEdit);
-	if (!editableItems.length) {
+	const isRejected = normalizeDate(editReimbursementData?.status_code || '') === 'RMB_REJECTED';
+	if (!editableItems.length && !isRejected) {
 		Swal.fire({ icon: 'warning', title: 'Nothing to edit', text: 'All items are approved and locked. No changes can be made.' });
 		return null;
 	}
@@ -513,7 +514,7 @@ const sendEditUpdate = (statusCode) => {
 			.then((result) => { if (result.isConfirmed) doSave(); });
 		return;
 	}
-	Swal.fire({ icon: 'question', title: 'Resubmit for Approval?', text: 'Are you sure you want to resubmit this reimbursement for approval?', showCancelButton: true, confirmButtonText: 'Yes', cancelButtonText: 'Cancel', reverseButtons: true, confirmButtonColor: '#6366f1' })
+	Swal.fire({ icon: 'question', title: 'Resubmit for Approval?', text: 'Are you sure you want to resubmit this reimbursement for approval?', showCancelButton: true, confirmButtonText: 'Yes', cancelButtonText: 'Cancel', reverseButtons: true, confirmButtonColor: '#5b2bd6' })
 		.then((result) => { if (result.isConfirmed) doSave(); });
 };
 

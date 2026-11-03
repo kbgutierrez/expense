@@ -103,7 +103,7 @@ $autoload['helper'] = array('url', 'form', 'sp_helper', 'misc_helper', 'tableau_
 | config files.  Otherwise, leave it blank.
 |
 */
-$autoload['config'] = array();
+$autoload['config'] = array('branding');
 
 /*
 | -------------------------------------------------------------------

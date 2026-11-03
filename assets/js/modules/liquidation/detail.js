@@ -72,7 +72,7 @@ const renderAttachment = (name) => {
 		</span>`;
 	}
 	return `<span class="kna-file-wrap">
-		<i class="fas fa-file-alt" style="color:#6366f1;font-size:11px;"></i>
+		<i class="fas fa-file-alt" style="color:#5b2bd6;font-size:11px;"></i>
 		<a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>
 	</span>`;
 };
@@ -211,11 +211,139 @@ const renderExpenseCard = (summary, index) => {
 	`;
 };
 
+const mobileDetailQuery = window.matchMedia ? window.matchMedia('(max-width: 767.98px)') : null;
+const isMobileDetail = () => Boolean(mobileDetailQuery && mobileDetailQuery.matches);
+let detailExpensesCache = null;
+let detailSheetIndex = null;
+
+const formatDetailShortDate = (value) => {
+	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(normalizeDate(value));
+	if (!m) return '';
+	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+	return `${months[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}`;
+};
+
+const getDetailStatus = (expense) => {
+	if (Number(expense.has_approved || 0)) return 'approved';
+	if (Number(expense.has_rejected || 0)) return 'rejected';
+	return '';
+};
+
+const renderMobileDetailCard = (expense, index) => {
+	const summary = getExpenseItemSummary(expense);
+	const status = getDetailStatus(expense);
+	const name = normalizeDate(expense.long_text || expense.expense_category_name || expense.category_name || '') || summary.typeText;
+	const sub = [formatDetailShortDate(summary.docDate), summary.reference !== '—' ? `OR ${summary.reference}` : ''].filter(Boolean).join(' · ');
+	const chip = status === 'approved'
+		? '<span class="lqm-chip is-approved"><i class="fas fa-check"></i> Approved</span>'
+		: (status === 'rejected' ? '<span class="lqm-chip is-rejected"><i class="fas fa-times-circle"></i> Rejected</span>' : '');
+	const hasReceipt = summary.attachNames.length > 0;
+	return `
+		<button type="button" class="lqm-exp${status === 'rejected' ? ' is-rejected' : ''}" data-detail-action="mOpen" data-detail-index="${index}">
+			<span class="lqm-exp-thumb${hasReceipt ? '' : ' is-missing'}"><i class="fas ${hasReceipt ? 'fa-receipt' : 'fa-exclamation'}"></i></span>
+			<span class="lqm-exp-main">
+				<span class="lqm-exp-name d-block">${escapeHtml(name)}</span>
+				<span class="lqm-exp-sub d-block">${escapeHtml(sub || '—')}</span>
+				${chip}
+			</span>
+			<span class="lqm-exp-right">
+				<span class="lqm-exp-amt d-block">${escapeHtml(formatPHP(summary.amount))}</span>
+				${hasReceipt ? '' : '<span class="lqm-exp-flag d-block">No receipt</span>'}
+			</span>
+		</button>`;
+};
+
+const renderMobileDetailSheet = (expense) => {
+	const summary = getExpenseItemSummary(expense);
+	const status = getDetailStatus(expense);
+	let note = '';
+	if (status === 'approved') note = '<div class="lqm-locked-note"><i class="fas fa-check-circle"></i> Approved</div>';
+	if (status === 'rejected') {
+		note = `<div class="lqm-reject-note"><b><i class="fas fa-exclamation-circle"></i> Rejected</b><div><strong>${escapeHtml(normalizeDate(expense.rejected_by_name || 'Approver'))}:</strong> ${escapeHtml(normalizeDate(expense.rejection_reason || 'No reason provided'))}</div></div>`;
+	}
+	const receipt = summary.attachNames.length
+		? `<div class="lqm-receipt-has"><span class="kna-attachment-cell">${summary.attachNames.map(renderAttachment).join('')}</span></div>`
+		: '<div class="lqm-receipt-has"><span class="text-muted" style="font-size:12px;">No receipt attached</span></div>';
+	const kv = (label, value) => `<div class="lqm-kv"><span>${label}</span><b>${escapeHtml(value || '—')}</b></div>`;
+	const vendor = [summary.vendorName, summary.vendorAddress, summary.vendorTin ? `TIN ${summary.vendorTin}` : ''].filter(Boolean);
+	return `
+		<div class="lqm-sheet-backdrop" data-detail-action="mClose"></div>
+		<div class="lqm-sheet" role="dialog" aria-modal="true" aria-label="Expense">
+			<div class="lqm-grab"></div>
+			<div class="lqm-sheet-head">
+				<b>Expense</b>
+				<button type="button" class="lqm-icon-btn" data-detail-action="mClose" aria-label="Close"><i class="fas fa-times"></i></button>
+			</div>
+			<div class="lqm-sheet-body">
+				${note}
+				${receipt}
+				<div class="lqm-amount-static">${escapeHtml(formatPHP(summary.amount))}</div>
+				${summary.isVattable ? `<div class="lqm-amount-sub">Net ${escapeHtml(formatPHP(summary.netAmt))} · VAT ${escapeHtml(formatPHP(summary.vatAmt))}</div>` : ''}
+				${kv('Date', formatDetailShortDate(summary.docDate))}
+				${kv('OR / Invoice no.', summary.reference)}
+				${kv('Expense type', summary.typeText)}
+				${kv('Description', summary.description)}
+				${kv('Vendor', vendor.join(' · '))}
+				${kv('VAT-able', summary.isVattable ? 'Yes' : 'No')}
+			</div>
+			<div class="lqm-sheet-foot">
+				<button type="button" class="lqm-btn lqm-btn-primary" data-detail-action="mClose">Close</button>
+			</div>
+		</div>`;
+};
+
+const renderMobileDetailItems = (expenses) => {
+	const container = domDetail.viewExpenseItems;
+	const list = expenses || [];
+	const sheetExpense = detailSheetIndex !== null ? list[detailSheetIndex] : null;
+	if (!sheetExpense) detailSheetIndex = null;
+	document.documentElement.classList.toggle('lqm-sheet-open', Boolean(sheetExpense));
+	container.innerHTML = `
+		<div class="lqm-list">
+			<div class="lqm-section"><b>Expenses</b><span>${list.length} item${list.length === 1 ? '' : 's'}</span></div>
+			${list.length ? list.map(renderMobileDetailCard).join('') : '<div class="lqm-empty"><b>No expense items found</b></div>'}
+		</div>
+		<div class="lqm-sheet-wrap">${sheetExpense ? renderMobileDetailSheet(sheetExpense) : ''}</div>`;
+};
+
+const updateDetailMobileSummary = () => {
+	const approved = Number(normalizeDate(domDetail.mobileApprovedAmount?.textContent).replace(/[^0-9.]/g, '') || 0);
+	const total = Number(normalizeDate(domDetail.mobileTotal?.textContent).replace(/[^0-9.]/g, '') || 0);
+	const bar = document.getElementById('mobileProgressBar');
+	const left = document.getElementById('mobileLeft');
+	if (bar) {
+		bar.style.width = `${approved > 0 ? Math.min(100, (total / approved) * 100) : 0}%`;
+		bar.classList.toggle('is-over', approved > 0 && total > approved);
+	}
+	if (left) {
+		if (approved <= 0) left.textContent = '';
+		else if (total <= approved) left.textContent = `${formatPHP(approved - total)} left`;
+		else left.textContent = `${formatPHP(total - approved)} over`;
+	}
+};
+
+const setDetailMobileVariance = (refund, reimburse) => {
+	if (!domDetail.mobileVariance) return;
+	domDetail.mobileVariance.textContent = refund > 0 ? `${formatPHP(refund)} to return` : (reimburse > 0 ? `${formatPHP(reimburse)} to reimburse` : 'Fully liquidated');
+	domDetail.mobileVariance.className = 'lqm-variance' + (refund > 0 ? ' is-return' : (reimburse > 0 ? ' is-reimburse' : ' is-balanced'));
+};
+
 const renderDetailExpenseItems = (expenses) => {
 	const container = domDetail.viewExpenseItems;
 	if (!container) {
 		return;
 	}
+	detailExpensesCache = expenses || [];
+
+	if (isMobileDetail()) {
+		if (expenses && expenses.length && domDetail.mobileTotal) {
+			domDetail.mobileTotal.textContent = formatPHP(expenses.reduce((sum, e) => sum + Number(e.actual_amount || 0), 0));
+		}
+		renderMobileDetailItems(expenses);
+		updateDetailMobileSummary();
+		return;
+	}
+	document.documentElement.classList.remove('lqm-sheet-open');
 
 	if (!expenses || !expenses.length) {
 		container.innerHTML = '<div class="text-muted kna-small py-2">No expense items found.</div>';
@@ -586,8 +714,20 @@ const cacheDetailDom = () => {
 			const wrap = e.target.closest('[data-lightbox]');
 			if (wrap) {
 				openLightbox(wrap.getAttribute('data-lightbox'));
+				return;
 			}
+			const btn = e.target.closest('[data-detail-action]');
+			if (!btn || !detailExpensesCache) return;
+			const action = btn.getAttribute('data-detail-action');
+			if (action === 'mOpen') detailSheetIndex = Number(btn.getAttribute('data-detail-index'));
+			if (action === 'mClose') detailSheetIndex = null;
+			renderMobileDetailItems(detailExpensesCache);
 		});
+	}
+	if (mobileDetailQuery) {
+		const onBreakpoint = () => { detailSheetIndex = null; if (detailExpensesCache) renderDetailExpenseItems(detailExpensesCache); };
+		if (mobileDetailQuery.addEventListener) mobileDetailQuery.addEventListener('change', onBreakpoint);
+		else if (mobileDetailQuery.addListener) mobileDetailQuery.addListener(onBreakpoint);
 	}
 	const lbEl = document.getElementById('knaLightbox');
 	if (lbEl) {
@@ -655,11 +795,12 @@ const initDetailPage = () => {
 			domDetail.mobileApprovedAmount.textContent = formatPHP(Number(record.approved_amount || 0));
 		}
 		const submittedDate = normalizeDate(record.submitted_date || '').slice(0, 10) || '-';
+		const caDate = normalizeDate(record.ca_date || '').slice(0, 10) || '-';
 		if (domDetail.viewCaDate) {
-			domDetail.viewCaDate.textContent = submittedDate;
+			domDetail.viewCaDate.textContent = caDate;
 		}
 		if (domDetail.mobileCaDate) {
-			domDetail.mobileCaDate.textContent = submittedDate;
+			domDetail.mobileCaDate.textContent = caDate;
 		}
 		if (domDetail.viewLiquidatedAmount) {
 			domDetail.viewLiquidatedAmount.textContent = formatPHP(Number(record.total_amount_spent || 0));
@@ -712,6 +853,7 @@ const initDetailPage = () => {
 		if (domDetail.mobileVariance) {
 			domDetail.mobileVariance.textContent = variance.mobileText;
 		}
+		setDetailMobileVariance(refund, reimburse);
 		if (domDetail.viewPurpose) {
 			domDetail.viewPurpose.textContent = normalizeDate(record.description || '') || '-';
 		}
@@ -720,14 +862,18 @@ const initDetailPage = () => {
 		}
 
 		const statusCode = normalizeDate(record.status_code || '');
-		const isSubmitted = statusCode === 'LQ_SUBMITTED';
+		const isSubmitted = statusCode === 'LQ_SUBMITTED' || statusCode === 'LQ_REJECTED';
 		const currentUserId = Number(window.currentUserId || 0);
-		const createdById = Number(record.created_by || 0);
-		
-		if (isSubmitted && createdById === currentUserId && domDetail.btnEditLiquidation) {
-			domDetail.btnEditLiquidation.classList.remove('d-none');
-			domDetail.btnEditLiquidation.href = `${base_url}transactions/liquidation/edit/${encodeURIComponent(ref)}`;
+		const createdById = Number(record.created_by_id || 0);
+
+		if (isSubmitted && createdById === currentUserId) {
+			[domDetail.btnEditLiquidation, document.getElementById('btnEditLiquidationDesktop')].forEach((btn) => {
+				if (!btn) return;
+				btn.classList.remove('d-none');
+				btn.href = `${base_url}transactions/liquidation/edit/${encodeURIComponent(ref)}`;
+			});
 		}
+		updateDetailMobileSummary();
 	}).fail(() => {
 		// Silently fail - details will still try to load
 	});

@@ -50,7 +50,7 @@ class Portal_model extends MY_Model
             ->join('BigEUsers.dbo.portal P', 'P.id = m.portal_id', 'inner')
             ->where('u.id', $userId)
             ->where_in('mg.id', array(92, 38, 32))
-            ->where('P.id', 47);
+            ->where('P.id', (int) config_item('portal_id'));
         return $this->rows();
     }
 
@@ -64,9 +64,26 @@ class Portal_model extends MY_Model
             ->join('BigEUsers.dbo.module_group mg', 'mg.id = m.group_id', 'inner')
             ->join('BigEUsers.dbo.portal P', 'P.id = m.portal_id', 'inner')
             ->where('u.id', $userId)
-            ->where('P.id', 47)
+            ->where('P.id', (int) config_item('portal_id'))
             ->group_by(array('mg.icon', 'mg.name'))
             ->order_by('mg.name', 'DESC');
-        return $this->rows();
+        $rows = $this->rows();
+        foreach ($rows as &$row) {
+            $row['module_icon'] = $this->normalize_icon(isset($row['module_icon']) ? $row['module_icon'] : '');
+        }
+        unset($row);
+        return $rows;
+    }
+
+    private function normalize_icon($icon)
+    {
+        $classes = preg_split('/\s+/', trim((string) $icon), -1, PREG_SPLIT_NO_EMPTY);
+        if (!$classes) {
+            return 'fas fa-folder';
+        }
+        if (!preg_grep('/^fa[srlbd]?$/', $classes)) {
+            array_unshift($classes, 'fas');
+        }
+        return implode(' ', array_unique($classes));
     }
 }

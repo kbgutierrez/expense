@@ -64,7 +64,7 @@
   }
 
   .btn-primary {
-    background: #6366f1;
+    background: var(--brand-700);
     color: #fff;
     border: none;
   }
@@ -101,7 +101,7 @@
   .kna-fin-card {
     background: #f8fafc;
     border: 1px solid #e5e7eb;
-    border-left: 3px solid #6366f1;
+    border-left: 3px solid var(--brand-700);
     border-radius: 6px;
     padding: 10px 12px;
   }

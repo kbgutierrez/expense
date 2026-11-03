@@ -67,7 +67,7 @@
 
     .kna-table-main th,
     .kna-table-action th {
-        background: #f8fbff;
+        background: var(--brand-50);
     }
 
     .kna-tab {
@@ -82,8 +82,8 @@
     }
 
     .kna-tab.is-active {
-        background: #2f6eb4;
-        border-color: #2f6eb4;
+        background: var(--brand-700);
+        border-color: var(--brand-700);
         color: #fff;
     }
 
@@ -157,8 +157,8 @@
     }
 
     .kna-timeline-item.is-current::before {
-        background: #2f6eb4;
-        box-shadow: 0 0 0 2px #2f6eb4;
+        background: var(--brand-700);
+        box-shadow: 0 0 0 2px var(--brand-700);
     }
 
     .kna-timeline-item.is-done::before {

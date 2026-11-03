@@ -35,7 +35,7 @@ const renderAttachment = (name) => {
 		</span>`;
 	}
 	return `<span class="kna-file-wrap">
-		<i class="fas fa-file-alt" style="color:#6366f1;font-size:11px;"></i>
+		<i class="fas fa-file-alt" style="color:#5b2bd6;font-size:11px;"></i>
 		<a href="${url}" target="_blank" rel="noopener">${escapeHtml(name)}</a>
 	</span>`;
 };

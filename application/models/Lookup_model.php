@@ -30,6 +30,7 @@ class Lookup_model extends MY_Model
             ->from('BigEUsers.dbo.users')
             ->where('department_id', $departmentId)
             ->where('is_active', 1)
+            ->where('ISNULL(is_test, 0) = 0', null, false)
             ->order_by('firstname', 'ASC');
         return $this->rows();
     }

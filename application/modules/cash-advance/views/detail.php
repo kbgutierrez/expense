@@ -86,7 +86,7 @@
     flex: 0 0 auto;
     transition: background .15s, color .15s, border-color .15s;
   }
-  .kna-history-btn:hover { background: #eef2ff; border-color: #6366f1; color: #4f46e5; }
+  .kna-history-btn:hover { background: var(--brand-100); border-color: var(--brand-700); color: var(--brand-700); }
 
   .kna-history-modal-overlay {
     position: fixed;
@@ -165,7 +165,7 @@
   .kna-fin-card {
     background: #f8fafc;
     border: 1px solid #e5e7eb;
-    border-left: 3px solid #6366f1;
+    border-left: 3px solid var(--brand-700);
     border-radius: 6px;
     padding: 10px 12px;
   }
@@ -244,12 +244,12 @@
   }
 
   .kna-timeline-item.is-current {
-    border-left-color: #2f6eb4;
+    border-left-color: var(--accent-600);
   }
 
   .kna-timeline-item.is-current::before {
-    background: #2f6eb4;
-    box-shadow: 0 0 0 2px #bfdbfe;
+    background: var(--accent-600);
+    box-shadow: 0 0 0 2px var(--accent-200);
   }
 
   .kna-timeline-item.is-pending {
@@ -364,7 +364,7 @@
   .kna-attachment-thumb-wrap:hover {
     transform: scale(1.05);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    border-color: #bfdbfe;
+    border-color: var(--brand-200);
   }
 
   .kna-attachment-thumb-img {
@@ -379,8 +379,8 @@
     width: 48px;
     height: 48px;
     border-radius: 6px;
-    background: #eff6ff;
-    color: #2563eb;
+    background: var(--brand-100);
+    color: var(--brand-700);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -642,7 +642,7 @@
         </div>
         <div class="kna-doc-panel">
           <div class="kna-doc-meta">
-            <div class="kna-small text-muted">Approval is still in progress. You can monitor and complete K-flow steps here without leaving K-net.</div>
+            <div class="kna-small text-muted">Approval is still in progress. You can monitor and complete K-Flow steps here without leaving <?= html_escape(config_item('app_name')); ?>.</div>
             <a href="#" id="viewWorkflowOpenNewTab" class="btn btn-sm btn-outline-secondary d-none" target="_blank" rel="noopener">Open Workflow in New Tab</a>
           </div>
           <iframe id="viewWorkflowIframe" class="kna-doc-frame" title="Embedded K-flow Workflow"></iframe>

@@ -32,7 +32,7 @@
 		line-height: 1.15;
 		font-weight: 600;
 		margin: 0;
-		color: #1d2a3a;
+		color: var(--brand-900);
 	}
 
 	.kna-kpi-caption {
@@ -170,12 +170,12 @@
 	.kna-rmb-tabs { border-bottom: 1px solid #d9e0e7; margin-bottom: .85rem; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
 	.kna-rmb-tabs::-webkit-scrollbar { height: 4px; }
 	.kna-rmb-tabs .nav-link { font-size: 13px; font-weight: 600; color: #4a5a6a; border: none; border-bottom: 2px solid transparent; padding: .55rem .9rem; white-space: nowrap; }
-	.kna-rmb-tabs .nav-link.active { color: #2f6eb4; border-bottom-color: #2f6eb4; background: transparent; }
+	.kna-rmb-tabs .nav-link.active { color: var(--brand-700); border-bottom-color: var(--brand-700); background: transparent; }
 	.kna-rmb-tabs .nav-link i { margin-right: 5px; }
 
 	.kna-kpi-row { display: flex; flex-wrap: wrap; gap: .65rem; margin-bottom: .85rem; }
 	.kna-kpi-row > div { flex: 1 1 160px; min-width: 140px; }
-	.kna-kpi-row .kna-kpi-fund { border-left: 3px solid #2f6eb4; }
+	.kna-kpi-row .kna-kpi-fund { border-left: 3px solid var(--brand-700); }
 
 	@media (max-width: 575.98px) {
 		.kna-kpi-row { gap: .5rem; }

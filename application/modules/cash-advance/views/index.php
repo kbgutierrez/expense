@@ -31,7 +31,7 @@
     line-height: 1.15;
     font-weight: 600;
     margin: 0;
-    color: #1d2a3a;
+    color: var(--brand-900);
   }
 
   .kna-kpi-caption {

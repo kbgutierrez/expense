@@ -24,7 +24,7 @@ const updateEventInfoBox = () => {
 	if (firesWhenEl) firesWhenEl.textContent = option.getAttribute('data-fires-when') || '';
 	if (sentToEl) sentToEl.textContent = sentTo;
 	if (composeToEl) composeToEl.textContent = sentTo;
-	box.style.borderLeftColor = option.getAttribute('data-accent') || '#2f6eb4';
+	box.style.borderLeftColor = option.getAttribute('data-accent') || '#5b2bd6';
 };
 
 const loadDefaultTemplate = () => {

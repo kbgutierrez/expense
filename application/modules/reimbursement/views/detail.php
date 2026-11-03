@@ -86,7 +86,7 @@
 		flex: 0 0 auto;
 		transition: background .15s, color .15s, border-color .15s;
 	}
-	.kna-history-btn:hover { background: #eef2ff; border-color: #6366f1; color: #4f46e5; }
+	.kna-history-btn:hover { background: var(--brand-100); border-color: var(--brand-700); color: var(--brand-700); }
 
 	.kna-history-modal-overlay {
 		position: fixed;
@@ -161,7 +161,7 @@
 	.kna-fin-card {
 		background: #f8fafc;
 		border: 1px solid #e5e7eb;
-		border-left: 3px solid #6366f1;
+		border-left: 3px solid var(--brand-700);
 		border-radius: 6px;
 		padding: 10px 12px;
 	}
@@ -243,7 +243,7 @@
 		width: 15px;
 		height: 15px;
 		margin: 0;
-		accent-color: #2563eb;
+		accent-color: var(--brand-700);
 	}
 
 	/* Attachment thumbnails */
@@ -267,7 +267,7 @@
 	}
 	.kna-thumb:hover {
 		transform: scale(1.1);
-		border-color: #6366f1;
+		border-color: var(--brand-700);
 	}
 	.kna-thumb-label {
 		font-size: 10px;
@@ -287,7 +287,7 @@
 		margin-bottom: 3px;
 	}
 	.kna-file-wrap a {
-		color: #4f46e5;
+		color: var(--brand-700);
 		text-decoration: none;
 		font-weight: 600;
 	}
@@ -471,10 +471,10 @@
 		background: #22c55e;
 		box-shadow: 0 0 0 2px #dcfce7;
 	}
-	.kna-timeline-item.is-current { border-left-color: #2f6eb4; }
+	.kna-timeline-item.is-current { border-left-color: var(--accent-600); }
 	.kna-timeline-item.is-current::before {
-		background: #2f6eb4;
-		box-shadow: 0 0 0 2px #bfdbfe;
+		background: var(--accent-600);
+		box-shadow: 0 0 0 2px var(--accent-200);
 	}
 	.kna-timeline-item.is-pending { border-left-color: #d1d5db; }
 	.kna-timeline-item.is-pending::before {

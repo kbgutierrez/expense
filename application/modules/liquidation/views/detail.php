@@ -86,7 +86,7 @@
 		flex: 0 0 auto;
 		transition: background .15s, color .15s, border-color .15s;
 	}
-	.kna-history-btn:hover { background: #eef2ff; border-color: #6366f1; color: #4f46e5; }
+	.kna-history-btn:hover { background: var(--brand-100); border-color: var(--brand-700); color: var(--brand-700); }
 
 	.kna-history-btn-mobile {
 		display: inline-flex;
@@ -320,7 +320,7 @@
 	.kna-fin-card {
 		background: #f8fafc;
 		border: 1px solid #e5e7eb;
-		border-left: 3px solid #6366f1;
+		border-left: 3px solid var(--brand-700);
 		border-radius: 6px;
 		padding: 10px 12px;
 	}
@@ -461,7 +461,7 @@
 		width: 15px;
 		height: 15px;
 		margin: 0;
-		accent-color: #2563eb;
+		accent-color: var(--brand-700);
 	}
 
 	.kna-vat-yes {
@@ -517,7 +517,7 @@
 
 	.kna-thumb:hover {
 		transform: scale(1.1);
-		border-color: #6366f1;
+		border-color: var(--brand-700);
 	}
 
 	.kna-thumb-label {
@@ -540,7 +540,7 @@
 	}
 
 	.kna-file-wrap a {
-		color: #4f46e5;
+		color: var(--brand-700);
 		text-decoration: none;
 		font-weight: 600;
 	}
@@ -588,7 +588,7 @@
 		width: 22px;
 		height: 22px;
 		border-radius: 50%;
-		background: #6366f1;
+		background: var(--brand-700);
 		color: #fff;
 		font-size: 10px;
 		font-weight: 700;
@@ -785,12 +785,12 @@
 
 		/* Mobile Hero */
 		.kna-mobile-hero {
-			background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+			background: linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 100%);
 			border-radius: 12px;
 			padding: 14px 16px;
 			margin-bottom: 10px;
 			color: #fff;
-			box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+			box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.25);
 		}
 		.kna-mobile-hero-top {
 			display: flex;
@@ -854,23 +854,23 @@
 			border-radius: 10px;
 			padding: 10px 12px;
 			border: 1px solid #e5e7eb;
-			border-left: 3px solid #6366f1;
+			border-left: 3px solid var(--brand-700);
 			box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 		}
-		.kna-info-item-mobile.liq-no { border-left-color: #6366f1; }
+		.kna-info-item-mobile.liq-no { border-left-color: var(--brand-700); }
 		.kna-info-item-mobile.ca-ref { border-left-color: #3b82f6; }
 		.kna-info-item-mobile.ca-amt { border-left-color: #0f766e; }
-		.kna-info-item-mobile.ca-date { border-left-color: #8b5cf6; }
+		.kna-info-item-mobile.ca-date { border-left-color: var(--brand-500); }
 		.kna-info-item-mobile.range { border-left-color: #f59e0b; }
 		.kna-info-item-mobile.total { border-left-color: #059669; }
 		.kna-info-item-mobile.variance { border-left-color: #ef4444; }
 		.kna-info-item-mobile.payable { border-left-color: #ec4899; }
 		.kna-info-item-mobile.address { border-left-color: #14b8a6; }
 		.kna-info-item-mobile.costcenter { border-left-color: #f97316; }
-		.kna-info-item-mobile.status { border-left-color: #6366f1; }
+		.kna-info-item-mobile.status { border-left-color: var(--brand-700); }
 		.kna-info-item-mobile.submitted { border-left-color: #64748b; }
-		.kna-info-item-mobile.expense-period { border-left-color: #a855f7; }
-		.kna-info-item-mobile.purpose { border-left-color: #6366f1; }
+		.kna-info-item-mobile.expense-period { border-left-color: var(--accent-600); }
+		.kna-info-item-mobile.purpose { border-left-color: var(--brand-700); }
 		.kna-info-label-mobile {
 			font-size: 9px;
 			font-weight: 700;
@@ -934,12 +934,12 @@
 	}
 
 	.kna-timeline-item.is-current {
-		border-left-color: #2f6eb4;
+		border-left-color: var(--accent-600);
 	}
 
 	.kna-timeline-item.is-current::before {
-		background: #2f6eb4;
-		box-shadow: 0 0 0 2px #bfdbfe;
+		background: var(--accent-600);
+		box-shadow: 0 0 0 2px var(--accent-200);
 	}
 
 	.kna-timeline-item.is-pending {
@@ -983,6 +983,24 @@
 			font-size: 11px;
 		}
 	}
+
+	@media (max-width: 767.98px) {
+		.kna-page > .d-flex.mb-2 { margin-bottom: 12px !important; }
+		.kna-page > .d-flex.mb-2 .kna-title { font-size: 18px; font-weight: 700; color: #1f2937; }
+		.kna-page > .d-flex.mb-2 .btn-outline-secondary {
+			width: 38px; height: 38px; padding: 0; border-radius: 50%;
+			display: inline-flex; align-items: center; justify-content: center;
+			font-size: 0; border-color: #e5e7eb; background: #fff;
+		}
+		.kna-page > .d-flex.mb-2 .btn-outline-secondary i { font-size: 15px; margin: 0 !important; }
+		.kna-page { padding-bottom: 96px !important; }
+		.kna-card { background: transparent; border: 0; box-shadow: none; }
+		.kna-card .card-body { padding: 0 !important; }
+		.kna-card .card-body > hr,
+		.kna-card .card-body > .kna-section-title { display: none !important; }
+		.lqm-ca-tools { display: flex; align-items: center; gap: 8px; }
+		.lqm-ca-tools .lqm-icon-btn { width: 34px; height: 34px; font-size: 14px; color: var(--brand-700); background: var(--brand-100); }
+	}
 </style>
 
 <div class="page-inner kna-page">
@@ -990,9 +1008,14 @@
 		<div>
 			<div class="kna-title">Liquidation Details</div>
 		</div>
-		<a href="<?= base_url('transactions/liquidation'); ?>" class="btn btn-outline-secondary">
-			<i class="fas fa-arrow-left mr-1"></i> Back
-		</a>
+		<div class="d-flex gap-2">
+			<a id="btnEditLiquidationDesktop" class="btn btn-outline-warning d-none mr-2" href="#">
+				<i class="fas fa-edit mr-1"></i> Edit
+			</a>
+			<a href="<?= base_url('transactions/liquidation'); ?>" class="btn btn-outline-secondary">
+				<i class="fas fa-arrow-left mr-1"></i> Back
+			</a>
+		</div>
 	</div>
 
 	<div class="card kna-card">
@@ -1087,73 +1110,43 @@
 
 			<!-- Mobile: Compact Overview (hidden on desktop) -->
 			<div class="kna-mobile-overview">
-				<div class="kna-mobile-hero">
-					<div class="kna-mobile-hero-top">
-						<div class="kna-mobile-hero-id">
-							<span>Liquidation No</span>
-							<span id="mobileLiquidationNo">-</span>
+				<div class="lqm-ca">
+					<div class="lqm-ca-top">
+						<div class="lqm-ca-id">
+							<div class="lqm-label">Liquidation</div>
+							<div class="lqm-ca-ref" id="mobileLiquidationNo">-</div>
 						</div>
-						<div style="display:flex;align-items:center;gap:8px;">
-							<div class="kna-mobile-hero-status" id="mobileStatus">-</div>
-							<button type="button" class="kna-history-btn-mobile" id="btnShowHistoryMobile" title="View History">
-								<i class="fas fa-history"></i>
-							</button>
+						<div class="lqm-ca-tools">
+							<span class="lqm-status" id="mobileStatus">-</span>
+							<button type="button" class="lqm-icon-btn" id="btnShowHistoryMobile" title="View History" aria-label="View history"><i class="fas fa-history"></i></button>
 						</div>
 					</div>
-					<div class="kna-mobile-hero-amounts">
-						<div class="kna-mobile-hero-amt">
-							<div class="kna-mobile-hero-amt-label">CA Amount</div>
-							<div class="kna-mobile-hero-amt-value" id="mobileCaAmount">-</div>
+					<div class="lqm-ca-purpose">CA <span id="mobileCaRef">-</span> &middot; <span id="mobilePurpose">-</span></div>
+					<div class="lqm-ca-balance">
+						<div class="lqm-ca-row">
+							<span>Approved</span>
+							<b id="mobileApprovedAmount">-</b>
 						</div>
-						<div class="kna-mobile-hero-amt">
-							<div class="kna-mobile-hero-amt-label">Approved</div>
-							<div class="kna-mobile-hero-amt-value" id="mobileApprovedAmount">-</div>
+						<div class="lqm-progress"><i id="mobileProgressBar"></i></div>
+						<div class="lqm-ca-row lqm-ca-row-muted">
+							<span>Liquidated <span id="mobileTotal">-</span></span>
+							<span id="mobileLeft"></span>
 						</div>
-						<div class="kna-mobile-hero-amt">
-							<div class="kna-mobile-hero-amt-label">Total</div>
-							<div class="kna-mobile-hero-amt-value" id="mobileTotal">-</div>
-						</div>
-						<div class="kna-mobile-hero-amt">
-							<div class="kna-mobile-hero-amt-label">Variance</div>
-							<div class="kna-mobile-hero-amt-value small" id="mobileVariance">-</div>
-						</div>
+						<span class="lqm-variance d-none" id="mobileVariance">-</span>
 					</div>
-				</div>
-				<div class="kna-info-section-mobile">
-					<div class="kna-info-grid-mobile">
-						<div class="kna-info-item-mobile ca-ref">
-							<div class="kna-info-label-mobile">CA Ref</div>
-							<div class="kna-info-value-mobile" id="mobileCaRef">-</div>
+					<details class="lqm-ca-details">
+						<summary>Liquidation details</summary>
+						<div class="lqm-ca-grid">
+							<div><span class="lqm-label">CA Amount</span><span id="mobileCaAmount">-</span></div>
+							<div><span class="lqm-label">CA Date</span><span id="mobileCaDate">-</span></div>
+							<div><span class="lqm-label">Submitted</span><span id="mobileSubmittedDate">-</span></div>
+							<div><span class="lqm-label">Expense Period</span><span id="mobileExpenseDate">-</span></div>
+							<div class="lqm-full"><span class="lqm-label">Payable To</span><span id="mobilePayableTo">-</span></div>
+							<div class="lqm-full"><span class="lqm-label">Cost Center</span><span id="mobileCostCenter">-</span></div>
+							<div class="lqm-full"><span class="lqm-label">Address</span><span id="mobileAddress">-</span></div>
 						</div>
-						<div class="kna-info-item-mobile ca-date">
-							<div class="kna-info-label-mobile">CA Date</div>
-							<div class="kna-info-value-mobile" id="mobileCaDate">-</div>
-						</div>
-						<div class="kna-info-item-mobile submitted">
-							<div class="kna-info-label-mobile">Submitted</div>
-							<div class="kna-info-value-mobile" id="mobileSubmittedDate">-</div>
-						</div>
-						<div class="kna-info-item-mobile expense-period">
-							<div class="kna-info-label-mobile">Expense Period</div>
-							<div class="kna-info-value-mobile" id="mobileExpenseDate">-</div>
-						</div>
-						<div class="kna-info-item-mobile payable">
-							<div class="kna-info-label-mobile">Payable To</div>
-							<div class="kna-info-value-mobile" id="mobilePayableTo">-</div>
-						</div>
-						<div class="kna-info-item-mobile costcenter">
-							<div class="kna-info-label-mobile">Cost Center</div>
-							<div class="kna-info-value-mobile" id="mobileCostCenter">-</div>
-						</div>
-						<div class="kna-info-item-mobile address full-width">
-							<div class="kna-info-label-mobile">Address</div>
-							<div class="kna-info-value-mobile" id="mobileAddress">-</div>
-						</div>
-						<div class="kna-info-item-mobile purpose full-width">
-							<div class="kna-info-label-mobile">Notes / Purpose</div>
-							<div class="kna-info-value-mobile" id="mobilePurpose">-</div>
-						</div>
-					</div>
+					</details>
+					<a href="#" class="lqm-btn lqm-btn-outline w-100 d-none" id="btnEditLiquidation" style="margin-top:12px;text-decoration:none;"><i class="fas fa-pen"></i> Edit liquidation</a>
 				</div>
 			</div>
 

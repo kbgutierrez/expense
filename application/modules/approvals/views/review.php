@@ -26,7 +26,7 @@
         flex: 0 0 auto;
         transition: background .15s, color .15s, border-color .15s;
     }
-    .kna-history-btn:hover { background: #eef2ff; border-color: #6366f1; color: #4f46e5; }
+    .kna-history-btn:hover { background: var(--brand-50); border-color: var(--brand-700); color: var(--brand-800); }
 
     .kna-history-modal-overlay {
         position: fixed;
@@ -159,8 +159,8 @@
     }
     .kna-ca-field-input:focus {
         outline: none;
-        border-color: #2f6eb4;
-        box-shadow: 0 0 0 3px rgba(47, 110, 180, 0.08);
+        border-color: var(--brand-700);
+        box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.08);
     }
 
     /* Cost Center in compact cell */
@@ -296,7 +296,7 @@
     .kna-attach-strip-item i { font-size: 12px; }
     .kna-attach-strip-item.img i { color: #0891b2; }
     .kna-attach-strip-item.pdf i { color: #dc2626; }
-    .kna-attach-strip-item.doc i { color: #2563eb; }
+    .kna-attach-strip-item.doc i { color: var(--brand-700); }
 
     /* ─── Change Badge ─── */
     .kna-change-badge {
@@ -355,8 +355,8 @@
     }
     .kna-timeline-item.is-done { border-left-color: #22c55e; }
     .kna-timeline-item.is-done::before { background: #22c55e; box-shadow: 0 0 0 2px #dcfce7; }
-    .kna-timeline-item.is-current { border-left-color: #2f6eb4; }
-    .kna-timeline-item.is-current::before { background: #2f6eb4; box-shadow: 0 0 0 2px #bfdbfe; }
+    .kna-timeline-item.is-current { border-left-color: var(--brand-700); }
+    .kna-timeline-item.is-current::before { background: var(--brand-700); box-shadow: 0 0 0 2px var(--brand-200); }
     .kna-timeline-item.is-pending { border-left-color: #d1d5db; }
     .kna-timeline-item.is-pending::before { background: #d1d5db; box-shadow: 0 0 0 2px #f3f4f6; }
     .kna-timeline-item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -432,7 +432,7 @@
         min-width: 220px;
     }
     .kna-review-table-main th {
-        background: #f8fbff; font-size: 11px; font-weight: 700; color: #475569;
+        background: var(--brand-50); font-size: 11px; font-weight: 700; color: #475569;
         text-transform: uppercase; letter-spacing: .3px; white-space: nowrap;
     }
     .kna-review-table-main th.text-right {
@@ -446,7 +446,7 @@
     }
     .kna-review-table-main tbody tr:nth-child(odd) td { background: #ffffff; }
     .kna-review-table-main tbody tr:nth-child(even) td { background: #f8fafc; }
-    .kna-review-table-main tbody tr:hover td { background: #f0f9ff; }
+    .kna-review-table-main tbody tr:hover td { background: var(--brand-50); }
     .kna-review-table-main tbody tr.is-approved td { background: #f0fdf4 !important; }
     .kna-review-table-main tbody tr.is-rejected td { background: #fef2f2 !important; }
 
@@ -462,7 +462,7 @@
         text-align: center; background: #fff; box-sizing: border-box;
     }
     .kna-review-table-action th {
-        background: #f8fbff; font-size: 11px; font-weight: 700; color: #475569;
+        background: var(--brand-50); font-size: 11px; font-weight: 700; color: #475569;
         text-transform: uppercase; letter-spacing: .3px;
     }
     .kna-review-table-action tbody tr:nth-child(odd) td { background: #ffffff; }
@@ -503,8 +503,8 @@
         width: 100%; resize: vertical; min-height: 60px; line-height: 1.5; color: #374151; background: #fafafa;
     }
     .kna-item-remark:focus {
-        outline: none; border-color: #2f6eb4; background: #fff;
-        box-shadow: 0 0 0 3px rgba(47, 110, 180, 0.08);
+        outline: none; border-color: var(--brand-700); background: #fff;
+        box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.08);
     }
     .kna-item-remark::placeholder { color: #9ca3af; font-size: 11px; }
     .kna-item-remark.d-none { display: none !important; }
@@ -531,7 +531,7 @@
         display: inline-flex; align-items: center; gap: 5px; font-size: 11px;
         font-weight: 600; color: #374151; cursor: pointer; margin: 0;
     }
-    .kna-vat-check { width: 15px; height: 15px; margin: 0; accent-color: #2563eb; cursor: pointer; }
+    .kna-vat-check { width: 15px; height: 15px; margin: 0; accent-color: var(--brand-700); cursor: pointer; }
     .kna-vat-check:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .kna-thumb-wrap {
@@ -539,13 +539,13 @@
         margin: 2px 6px 2px 0; max-width: 72px; vertical-align: top; text-align: center;
     }
     .kna-thumb { width: 58px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; transition: transform .15s, border-color .15s; }
-    .kna-thumb:hover { transform: scale(1.08); border-color: #6366f1; }
+    .kna-thumb:hover { transform: scale(1.08); border-color: var(--brand-700); }
     .kna-thumb-label {
         font-size: 10px; color: #6b7280; margin-top: 2px; max-width: 72px;
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
     }
     .kna-file-wrap { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; margin-bottom: 3px; }
-    .kna-file-wrap a { color: #4f46e5; text-decoration: none; font-weight: 600; }
+    .kna-file-wrap a { color: var(--brand-700); text-decoration: none; font-weight: 600; }
     .kna-file-wrap a:hover { text-decoration: underline; }
 
     /* ─── Mobile Cards (native-app style: bigger touch targets, clear
@@ -586,8 +586,8 @@
     }
     .kna-exp-card-value input.form-control:focus,
     .kna-exp-card-value select.form-control:focus {
-        outline: none; border-color: #2f6eb4; background: #fff;
-        box-shadow: 0 0 0 3px rgba(47, 110, 180, 0.08);
+        outline: none; border-color: var(--brand-700); background: #fff;
+        box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.08);
     }
     .kna-exp-card-value .kna-vat-check { width: 20px; height: 20px; }
     .kna-exp-card-value .kna-net-value, .kna-exp-card-value .kna-vat-value { font-weight: 600; }
@@ -603,7 +603,7 @@
     .kna-review-submit-bar {
         display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px;
         margin-bottom: .8rem; border: 1px solid #e5ecf3; border-radius: 8px;
-        background: #f8fbff; padding: 10px 12px;
+        background: var(--brand-50); padding: 10px 12px;
     }
     .kna-review-submit-stats { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 280px; }
     .kna-review-stat-chip {
@@ -730,8 +730,8 @@
         line-height: 1.2 !important;
     }
     .kna-inline-edit-input:focus {
-        border-color: #2f6eb4;
-        box-shadow: 0 0 0 2px rgba(47, 110, 180, 0.08);
+        border-color: var(--brand-700);
+        box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.08);
     }
     .kna-vendor-edit-wrap {
         display: grid;
@@ -773,8 +773,8 @@
     }
     .kna-review-items-body .select2-container--default .select2-selection--single:focus,
     .kna-review-items-body .select2-container--default.select2-container--focus .select2-selection--single {
-        border-color: #2f6eb4 !important;
-        box-shadow: 0 0 0 2px rgba(47, 110, 180, 0.08);
+        border-color: var(--brand-700) !important;
+        box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.08);
     }
 
     .kna-review-table-main td .kna-inline-edit-input,
