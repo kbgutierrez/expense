@@ -1,0 +1,21 @@
+{
+  "model": "sonnet",
+  "permissions": {
+    "allow": [
+      "Read(./notes/**)",
+      "Edit(./notes/**)",
+      "Write(./notes/**)",
+      "Bash(sh tools/php32.sh tools/gen_notes.php)"
+    ],
+    "deny": [
+      "Read(./system/**)",
+      "Read(./vendor/**)",
+      "Read(./node_modules/**)",
+      "Read(./application/logs/**)",
+      "Read(./application/cache/**)",
+      "Read(./uploads/**)",
+      "Read(./.env)",
+      "Read(./application/config/database.php)"
+    ]
+  }
+}
