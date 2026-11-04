@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sh tools/php32.sh \"C:/Users/KBGUTI~1/AppData/Local/Temp/claude/z--htdocs-expense/4e38fe9e-874e-40da-af46-9f8256377476/scratchpad/spdef.php\" sp_release_payment)",
+      "Bash(grep -v \":1$\")",
+      "Bash(GIT_TERMINAL_PROMPT=0 git -c safe.directory=* -c credential.helper= -c credential.helper='!gh auth git-credential' push https://github.com/kbgutierrez/k-net.git main)",
+      "Bash(gh repo *)"
+    ],
+    "additionalDirectories": [
+      "Z:\\htdocs\\expense-test\\notes",
+      "Z:\\htdocs\\expense-test"
+    ]
+  }
+}
